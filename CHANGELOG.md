@@ -5,6 +5,8 @@
 - Screenshots of the menu and `doctor` in `docs/images/`, shown in the README and doc 08.
 - `tools/screenshots.py` remakes them from the real menu with scripted input, with the show name,
   computer name and user folder replaced.
+- `AGENT_BRIEF.md`: a status table marks every goal, phase and safety rule as done, partly done or
+  missing; section 3 items now say which were checked on 3.9.61. The README links to it.
 
 ## 0.4.0
 

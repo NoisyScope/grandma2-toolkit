@@ -21,9 +21,12 @@ More screenshots: [docs/08](docs/08-cli-and-safety.md#screenshots).
 | Plugin manager (`plugins ...`) and Lua helper library | working |
 | Macro manager (`macros ...`), batch files, show checks, free slots | working |
 | Reference docs on grandMA2 (concepts, Lua API, commands) and inspection plugins | written, checked on 3.9.61 |
-| Color picker, effect helpers, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
+| Color picker, effect helpers, patch helper, pan/tilt wizard | not started |
+| Auto groups per layer / thirds / left-right-center / every-Nth, layer column in `show fixtures` | not started |
 
-All "working" parts are tested offline and against onPC 3.9.61.
+All "working" parts are tested offline and against onPC 3.9.61. The full checklist of what the project
+plan asks for, and what is still missing, is in
+[AGENT_BRIEF.md → Status against this brief](AGENT_BRIEF.md#status-against-this-brief-2026-11-12).
 
 ## Quick start (Windows, Python 3.11+)
 
@@ -88,6 +91,8 @@ Using the toolkit:
 ```
 
 Tests run offline against a fake console (`tests/fake_ma2.py`) built from replies captured on onPC 3.9.61.
+
+`tools/screenshots.py` remakes the images in `docs/images/` from the real menu (needs the console).
 
 ## Licence
 

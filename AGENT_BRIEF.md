@@ -14,7 +14,7 @@ The repository root is this folder: `C:\Users\Admin\Documents\grandma2-toolkit`.
 |---|---|
 | Tool form | **Python CLI** (terminal menus) that drives onPC from outside, **plus Lua plugins** that run inside onPC. |
 | "Aligning" heads | Means **pan/tilt normalization**: make every moving head respond the same way (invert, swap, offset in the patch). Venue position presets, fans and XYZ calibration are *out of scope* for now. |
-| DMX output | onPC is used with **MA hardware (wing/node)**, so commands can move and light **real fixtures**. Treat every command as live. |
+| DMX output | onPC is used with **MA hardware (wing/node)**, so commands can move and light **real fixtures**. Treat every command as live. *Update 2026-11-12: the wing is currently disconnected and work targets the software and Stage view only (see section 6, 0.4.0). The rule applies again as soon as hardware is reconnected.* |
 | Repo location | This folder. Not yet a Git repository; you initialise it (Phase 0). |
 | Language | English only (code, CLI, docs). |
 | Publishing | The repo **will be public** on the owner's personal GitHub. Pick a permissive licence (MIT), keep all private data out of history (show files, show names, credentials, IPs, the owner's email), and do not copy third-party plugin code without its licence notice. |
@@ -65,28 +65,32 @@ and `name.lua`. The Lua file must end with `return Start, Cleanup`. ✔ API surf
 `gma.show.getobj.*` (handle/class/index/number/name/label/amount/child/parent), `gma.show.property.*`,
 `gma.show.getvar/setvar`, `gma.user.getvar/setvar/getcmddest/getselectedexec`, `gma.show.getdmx`,
 `gma.export/export_csv/export_json/import`, `gma.network.*`. ✔ `gma.cmd` returns only an error string, not
-the command's output. ? The embedded interpreter is Lua 5.3 (check by echoing `_VERSION`).
-? Plugins are loaded with `Import "name.xml" At Plugin N` (file in `MA_ROOT\plugins\`), run with
-`Plugin N` or `Plugin "Name"`, refreshed with `ReloadPlugins`; one-liners run with `LUA "..."`.
+the command's output. ✔ The embedded interpreter is Lua 5.3 (`_VERSION`, with full `os`, `io`, `debug`).
+✔ Plugins are loaded with `Import "name.xml" At Plugin N` (file in `MA_ROOT\plugins\`), run with
+`Plugin N` or `Plugin "Name"`; one-liners run with `LUA "..."`. ✘ `ReloadPlugins` does **not** refresh
+edited files: import again over the same slot (see "Corrections" in section 6).
 
 **Known gap.** There is no Lua call that returns the current selection or programmer values. Work around
 it with system variables (`$SELECTEDFIXTURESCOUNT` etc. via `gma.show.getvar`), the object tree
 (`getobj` / `property`), or by `Export`-ing objects to XML and parsing the file.
 
-**Telnet remote.** ? Enable in *Setup → Console → Global Settings → Telnet = Login Enabled*. Port **30000**
+**Telnet remote.** ✔ Enable in *Setup → Console → Global Settings → Telnet = Login Enabled*. Port **30000**
 accepts commands and returns the command-line feedback as text (with ANSI colour codes); port **30001** is
 read-only. First line must be `Login "user" "password"`. This is the Python side's transport: unlike
 `gma.cmd`, it lets you read the output of `List`.
 
 **Web remote.** ? Port 80 WebSocket remote (*Global Settings → Remotes*), needs a user with a password.
-Optional fallback only; do not build on it unless Telnet proves insufficient.
+Optional fallback only; do not build on it unless Telnet proves insufficient. *Not checked: Telnet has
+been sufficient so far.*
 
-**XML import/export.** ? Most pool objects (groups, presets, macros, effects, sequences, layouts, MAtricks)
+**XML import/export.** ◐ Checked on 3.9.61: export of groups, fixtures and patch layers; import of
+plugins and macros (see `docs/03`). Not yet checked: presets, effects, sequences, layouts, MAtricks, and
+importing a patch layer. Most pool objects (groups, presets, macros, effects, sequences, layouts, MAtricks)
 and fixture layers (the patch) can be exported to and imported from XML. Generating XML and importing it
 is usually faster and more reliable than hundreds of individual commands, and it is the standard route for
 scripted patching.
 
-**Pan/tilt settings.** ? Per-fixture patch columns in *Setup → Patch & Fixture Schedule* include Pan/Tilt DMX
+**Pan/tilt settings.** ✔ (method found and written up in `docs/01` and `docs/03`; see 0.4.0 in section 6). Per-fixture patch columns in *Setup → Patch & Fixture Schedule* include Pan/Tilt DMX
 invert, encoder invert, swap, and pan/tilt offset. Find out how to read and write them (object tree under
 `EditSetup`, `Assign ... /property=value`, or fixture-layer XML round trip) and document the working method.
 
@@ -199,8 +203,48 @@ Useful observations: `List Fixture` columns are `Name FixId ChaId FixtureType Pa
 top-level object tree (`EditSetup`, `Groups`, `Presets`, `Effects`, `Layouts`, ...); `List Macro` on an empty
 pool replies `WARNING, NO OBJECTS FOUND FOR LIST`; `List Preset` with no type lists the current preset type only.
 
+**After 0.4.0 (unreleased):** terminal screenshots of the menu and `doctor` in `docs/images/` (shown in the
+README and `docs/08`), made by `tools/screenshots.py` from the real menu with private names replaced.
+
 Do the phases in order. Each ends with a commit and a short status report to the owner. Stop and ask when
 an acceptance check needs the owner (anything involving the running console).
+
+### Status against this brief (2026-11-12)
+
+✔ done · ◐ partly done or done differently · ✘ missing. Keep this table current.
+
+| Item | State | Notes |
+|---|---|---|
+| **Goals** | | |
+| G1 Understand | ✔ | `docs/01`, each statement marked checked or not |
+| G2 Reference | ✔ | `docs/02` (Lua API), `docs/03` (commands) |
+| G3 Script management | ✔ | `ma2kit plugins …`, `ma2kit macros …` |
+| G4 Utilities | ◐ | Only auto groups, show checks, free slots and backup exist. Color picker, effect helpers, patch helper and pan/tilt wizard are missing |
+| G5 Documentation | ◐ | Missing pages listed under Phase 6 |
+| G6 Repository | ✔ | Public on GitHub, commits per feature |
+| **Phase 0** | ✔ | Two deliberate differences from the layout: `lua/plugins/` holds flat `<name>.lua` files (the XML is generated at install), and `macros/` holds plain-text `<name>.txt` sources instead of XML |
+| **Phase 1** | ◐ | Docs 01–04 written and checked live. ✘ No notes kept on the third-party ColorPicker plugin or on reading the official 3.9 help; do both before the color picker. ✘ Web remote and several XML imports not checked (section 3) |
+| **Phase 2** | ◐ | Client, dry-run, transcript, reconnect, fake console all done. `shell` has only the Windows console's own line history (up arrow, F7), none kept between sessions |
+| **Phase 3** | ◐ | `show summary`, `show fixtures --format table\|json\|csv`, `show pool`, `show group`, `show free` work. ✘ The fixture list has no **layer** column. ✘ Executors not checked (`show pool` is generic but untested on them) |
+| **Phase 4** | ◐ | install / update / list / remove / run done; `lua/lib` is concatenated into each plugin. Instead of a manifest file, installed files go to their own subfolder (`plugins/ma2kit/`) and the show's pool is read for slots. Update re-imports, because `ReloadPlugins` does not reload files |
+| **Phase 5.1** Color picker builder | ✘ | Not started; read the ColorPicker prior art first |
+| **Phase 5.2** Auto groups | ◐ | Done: per fixture type, ALL / ODD / EVEN / halves, plus OUT>IN and IN>OUT, and a rig-wide ALL. ✘ Missing: per layer, thirds, left/right/center, every-Nth, configurable name pattern (names are fixed `<type> <variant>`) |
+| **Phase 5.3** Effect helpers | ✘ | Not started. `docs/01` lists the effect-line properties found so far |
+| **Phase 5.4** Patch helper | ✘ | Not started. Groundwork: `show check` already validates overlaps, overflow, unpatched and duplicate names on the loaded patch; the layer-export and subfixture-write methods are known (`docs/03`) |
+| **Phase 5.5** Pan/tilt wizard | ✘ | Not started. Groundwork: read/write method for invert/offset verified. Blocked: the reference orientation (section 8) is unanswered, and with no wing the result can only be checked in the patch data, not seen (the Stage view ignores offset/invert). "Tried on two real heads" needs hardware |
+| **Phase 5.6** Housekeeping | ✔ | `backup`, `doctor` (version, login, rights, show vs `allowed_shows`, leftover temp files) |
+| **Phase 6** Menu | ✔ | Every menu entry is also a subcommand; screenshots in `docs/08` |
+| **Phase 6** Docs | ◐ | ✔ `docs/05` (with the onPC clicks), `CHANGELOG.md`, pages for the existing utilities (06, 08, 09). ✘ `docs/troubleshooting.md` (a troubleshooting section exists inside `docs/05`). ✘ `docs/developing.md`: how to add a plugin is in `docs/07`, how to add a utility is not written. ✘ "Reach a working color picker from the README" cannot be met until 5.1 exists |
+| **Safety rules** | | |
+| 1 Real fixtures | ✔ | Live moves only with the owner present; no hardware connected at the moment |
+| 2 Test show | ◐ | The owner's designated test show is used instead of a new `toolkit_dev`; `allowed_shows` guards writes. `SaveShow` before writing is not automatic: run `ma2kit backup` first |
+| 3 Dry-run default | ◐ | `groups auto` and `batch` preview unless `--apply`, and there is a global `--dry-run`. ✘ `plugins install/update` and `macros install/update` act at once (they only add or replace ma2kit's own objects in free or own slots) |
+| 4 Confirm destructive commands | ◐ | `cmd`, `shell` and `batch` ask before `Delete`, `/nc` and other risky commands; the menu asks before removing plugins or macros. No per-action listing yet for `EditSetup` changes, which no tool makes so far |
+| 5 Pool safety | ✔ | Free-slot checks before storing; `show free` |
+| 6 Console settings | ✔ | Never changed by the tool; the owner made them |
+| 7 Secrets | ✔ | `config.toml` git-ignored, password masked in transcripts |
+| 8 Track files in `MA_ROOT` | ◐ | No manifest file: everything ma2kit writes is in its own `ma2kit/` subfolders or named `ma2kit_tmp…`, and `doctor` removes leftovers |
+| **Section 8 question** (reference orientation) | ✘ | Not asked or answered yet. Needed before the pan/tilt wizard |
 
 ### Phase 0: Repository bootstrap
 - `git init`, default branch `main`. Add `.gitignore` (Python, `config.toml`, `*.show.gz`, `*.backup`, exports, logs).
