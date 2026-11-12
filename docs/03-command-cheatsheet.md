@@ -131,7 +131,8 @@ cd /
 
 Columns that can be assigned this way: `ReacttoMaster`, `PanDMXInvert`, `TiltDMXInvert`, `PanEnc.Invert`,
 `TiltEnc.Invert`, `PanOffset`, `TiltOffset`, `Swap`, `BitmapDisable`, `Color`, `PosX/Y/Z`, `RotX/Y/Z`.
-✔ Pan/tilt columns are ignored for fixture types without pan/tilt. ○ On selected fixtures MA's
+✔ Pan/tilt columns are ignored for fixture types without pan/tilt. ✔ On a moving head `PanOffset` is
+stored (seen in `List`); the other pan/tilt columns are not yet tried. ○ On selected fixtures MA's
 predefined macros also use `Assign Fixture Thru /panoffset=0` from outside `EditSetup`; from the root
 `Assign Fixture 200 /panoffset=5` gave `Error #14` here.
 

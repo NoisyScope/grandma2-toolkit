@@ -58,9 +58,9 @@ for the classes found so far.
 - ✔ Writing a subfixture setting: `cd` into its layer and fixture, then `Assign 1 /<Column>=<value>`
   (column name without spaces, e.g. `/PosX=-5`). The change applies at once (verified with `PosX`).
   ✔ The pan/tilt settings are silently ignored on a fixture type without pan/tilt.
-  ○ On a moving head the same syntax should set `/PanDMXInvert=On`, `/PanOffset=…`, `/Swap=On`; MA's own
-  predefined macros use `Assign Fixture Thru /panoffset=$panoffset` on selected fixtures. Not yet tried
-  here because it moves real heads.
+  ✔ On a moving head `Assign 1 /PanOffset=5` is stored and shows in `List`; `/PanOffset=0` resets it.
+  ○ The physical effect on the beam, and `/PanDMXInvert=On`, `/Swap=On`, are not yet confirmed. MA's own
+  predefined macros use `Assign Fixture Thru /panoffset=$panoffset` on selected fixtures.
 - ✔ **Fixture types** (`EditSetup/FixtureTypes`, class `CMD_FIXTURE_TYPE`) hold the channel layout:
   properties `LongName`, `ShortName`, `Manufacturer`, `DMX Footprint`, `Instances`, `Mode`.
   Type 1 is always `Universal Attributes` (automatic).
