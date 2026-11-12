@@ -12,7 +12,8 @@ normalization of moving heads.
 | Part | State |
 |---|---|
 | Telnet client, `doctor`, `cmd`, `shell` | working, tested offline and against onPC 3.9.61 |
-| Show reader, plugin manager, utilities | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
+| Show reader (`show ...`), auto groups (`groups auto`) | working, tested offline and against onPC 3.9.61 |
+| Plugin manager, color picker, effects, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
 
 ## Quick start (Windows, Python 3.11+)
 
@@ -37,6 +38,10 @@ normalization of moving heads.
 | `ma2kit doctor` | Checks config, that onPC is reachable, Telnet is enabled, the login works, and the software version. |
 | `ma2kit cmd "List Group"` | Sends one command line and prints the reply. |
 | `ma2kit shell` | Interactive command line with the console's prompt. |
+| `ma2kit show summary` | Fixtures per type, patch span, and pool usage. |
+| `ma2kit show fixtures` | All fixtures as a table, JSON or CSV; `--positions` adds stage X/Y/Z. |
+| `ma2kit show pool <Pool>` / `show group <n>` | Any pool's contents; a group's members in order. |
+| `ma2kit groups auto [--apply]` | Previews, then creates, ALL/ODD/EVEN/halves/out-in groups per fixture type into empty slots from 500. See [docs/06](docs/06-show-reader-and-groups.md). |
 | `--dry-run` (global) | Prints what would be sent, sends nothing. |
 
 `Delete`, `NewShow`, `LoadShow`, `Shutdown`/`Reboot`/`Restart` and anything with `/nc` ask for confirmation first

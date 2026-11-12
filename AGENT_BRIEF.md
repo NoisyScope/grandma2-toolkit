@@ -130,9 +130,35 @@ ANSI/Telnet stripping, prompt detection, password masking, transcript, dry-run, 
 question about sessions is answered. Still open in Phase 2: reconnect. Phase 1 docs: only
 `docs/04-remote-control.md` exists.
 
-**Test show:** when this was checked, the owner's real show was loaded, not a test show. Before any
-command that writes to the show, confirm with `ma2kit doctor` (it prints the loaded show) that a test show
-is loaded, and ask the owner if not.
+**Phase 3 done** (`ma2kit/model.py`, `ma2kit show summary|fixtures|pool|group`): list-table parser, fixtures,
+types, pools, group members and stage positions via temporary XML exports. **Phase 5 item 2 (auto groups)
+done** (`ma2kit/groups.py`, `ma2kit groups auto`): created groups 500-514 in the test show. See
+`docs/06-show-reader-and-groups.md`. 30 offline tests.
+
+**Test show:** the show currently loaded in onPC is the owner's designated test show. It is backed up,
+holds nothing important, and uses the owner's usual fixture libraries and layout. You may store, delete,
+re-patch or break anything in it without asking. Its name is deliberately not written here (public
+repo); `ma2kit doctor` prints it, and the owner can confirm it. If a different show is loaded than the one
+agreed with the owner, stop and ask. This permission
+covers show data only: the Command Wing can output DMX, so moving or lighting fixtures still needs the
+owner present (rule 1 below).
+
+**Test rig (read live, 2026-11-11):** 32 fixtures, 2 universes.
+
+| Fixture IDs | Type (library) | Mode | Patch |
+|---|---|---|---|
+| 100–111 | SUPER BRIGHT "BEAM 8R + RING" (moving head beam) | 24CH | 1.001–1.288, consecutive |
+| 200–219 | SUPER BRIGHT "PAR280 SLIM" (LED PAR) | 9CH | 2.001–2.180, consecutive |
+
+Existing pools: groups 1–6 (`ALL`, `ALL_ESC`, `8R_ESC`, `SYM_8R_ALL`, `PAR_ALL`, `SYM_PAR_ALL`); effects 1–4,
+17, 18, 24, 25; layouts 1, 2, 3, 6; MAtricks 1; plugin 1 (`LUA`); no macros. Fixture positions (XYZ) are
+all 0. Fixtures 108–111 reuse the names "BEAM8R_RING 1–4" of fixtures 100–103 (a naming slip the auto-tools
+could detect). The beams are the targets for the pan/tilt normalization wizard.
+
+Useful observations: `List Fixture` columns are `Name FixId ChaId FixtureType Patch ...` with patch as
+`universe.address`; `List FixtureType` includes `DMXFootprint`, `Mode` and `Used`; `List Layer` lists the show's
+top-level object tree (`EditSetup`, `Groups`, `Presets`, `Effects`, `Layouts`, ...); `List Macro` on an empty
+pool replies `WARNING, NO OBJECTS FOUND FOR LIST`; `List Preset` with no type lists the current preset type only.
 
 Do the phases in order. Each ends with a commit and a short status report to the owner. Stop and ask when
 an acceptance check needs the owner (anything involving the running console).
@@ -239,5 +265,4 @@ a doc page, and tests for its command generation.
 
 ## 8. Questions to put to the owner when you start
 
-1. Which fixtures (make/model/mode) are in the usual rig? These decide color-mixing handling and the test set for the wizard.
-2. For normalization: what is the reference orientation ("pan positive = stage left, tilt positive = upstage", or another convention)?
+1. For normalization: what is the reference orientation ("pan positive = stage left, tilt positive = upstage", or another convention)?
