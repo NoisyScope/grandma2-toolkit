@@ -139,7 +139,12 @@ done** (`ma2kit/groups.py`, `ma2kit groups auto`): created groups 500-514 in the
 Phase 2 finished (dialog handling, late output, echo normalisation, auto-reconnect), Phase 4 done
 (`ma2kit plugins ...`, `lua/lib/ma2kit.lua`, `docs/07-plugins.md`), Phase 5 item 6 done (`backup`, `doctor`
 checks `[safety] allowed_shows`), `monitor` added, Phase 6 menu done (`ma2kit` with no arguments).
-50 offline tests. Macro manager (install/remove macro XML) is not built yet.
+50 offline tests.
+
+**0.3.0:** menu keeps one session; `batch`; macro manager (`macros ...`, `docs/09-macros-batch-checks.md`);
+`show check` (overlaps, overflow, unpatched, duplicate names); `show free`; doctor cleans temp exports.
+62 offline tests. Phase 4 is complete. Remaining phases: color picker, effect helpers, patch helper
+(import from CSV), pan/tilt wizard, plus reference docs 01-03 and 05.
 
 **Owner's rule: build generic features.** Never hard-code fixture types, IDs, group numbers, positions or
 layouts from the test show; read everything from the loaded show at runtime. Rig-specific ideas wait

@@ -234,6 +234,14 @@ class ShowModel:
         )
 
     # exports
+    def stale_temp_files(self) -> list[Path]:
+        """Temporary export files left behind by an interrupted ma2kit run."""
+        ma_path = self.var("PATH")
+        if not ma_path:
+            return []
+        root = Path(ma_path)
+        return sorted(root.glob("ma2kit_tmp_*.xml")) + sorted(root.glob("*/ma2kit_tmp_*.xml"))
+
     def export_xml(self, obj: str) -> ET.Element:
         """Export an object to XML, read the file, delete it, and return the parsed root."""
         if self.client.dry_run:

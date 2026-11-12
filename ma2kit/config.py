@@ -24,6 +24,7 @@ class Config:
     # [pools]
     group_start: int = 500
     plugin_start: int = 100
+    macro_start: int = 500
     # [backup]
     backup_dir: Path = REPO_ROOT / "backups"
     backup_keep: int = 20
@@ -67,6 +68,7 @@ def load_config(explicit: Path | None = None) -> Config:
         pools = data.get("pools", {})
         cfg.group_start = int(pools.get("group_start", cfg.group_start))
         cfg.plugin_start = int(pools.get("plugin_start", cfg.plugin_start))
+        cfg.macro_start = int(pools.get("macro_start", cfg.macro_start))
         backup = data.get("backup", {})
         if bdir := backup.get("dir"):
             cfg.backup_dir = (base / bdir).resolve()

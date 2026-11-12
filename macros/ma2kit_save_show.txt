@@ -1,0 +1,4 @@
+# description: Save the show, then show a confirmation in the command line feedback.
+SaveShow
+wait 0.5
+Lua "gma.feedback('ma2kit: show saved')"

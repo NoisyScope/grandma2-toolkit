@@ -15,6 +15,7 @@ runtime, so it works with any fixtures and layout.
 | Interface: interactive menu | working |
 | Show reader (`show ...`), auto groups (`groups auto`), `backup` | working |
 | Plugin manager (`plugins ...`) and Lua helper library | working |
+| Macro manager (`macros ...`), batch files, show checks, free slots | working |
 | Color picker, effect helpers, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
 
 All "working" parts are tested offline and against onPC 3.9.61.
@@ -50,7 +51,11 @@ All "working" parts are tested offline and against onPC 3.9.61.
 | `ma2kit show fixtures` | All fixtures as a table, JSON or CSV; `--positions` adds stage X/Y/Z. |
 | `ma2kit show pool <Pool>` / `show group <n>` | Any pool's contents; a group's members in order. |
 | `ma2kit groups auto [--apply]` | Previews, then creates, ALL/ODD/EVEN/halves/out-in groups per fixture type. |
+| `ma2kit show check` | Finds DMX overlaps, patches past 512, unpatched fixtures, duplicate names. |
+| `ma2kit show free <Pool> --count N` | First run of N free slots in a pool. |
 | `ma2kit plugins list / install / update / run / remove` | Puts this repo's Lua plugins into the show and runs them. |
+| `ma2kit macros list / install / update / remove` | Turns plain-text `macros/*.txt` into macros in the show. |
+| `ma2kit batch FILE [--apply]` | Previews, then sends, a file of commands; stops at the first error. |
 | `--dry-run` (global) | Prints what would be sent, sends nothing. |
 
 ## Documentation
@@ -59,6 +64,7 @@ All "working" parts are tested offline and against onPC 3.9.61.
 - [06 Show reader and auto groups](docs/06-show-reader-and-groups.md)
 - [07 Lua plugins](docs/07-plugins.md): writing plugins, the helper library, how install/update work
 - [08 Menu, backup, monitor and safety](docs/08-cli-and-safety.md)
+- [09 Macros, batch files and show checks](docs/09-macros-batch-checks.md)
 - [CHANGELOG](CHANGELOG.md)
 
 ## Development

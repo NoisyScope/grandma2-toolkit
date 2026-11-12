@@ -16,6 +16,7 @@ allowed_shows = []
 [pools]
 group_start = 500    # first group number used by "groups auto"
 plugin_start = 100   # first plugin pool number used by "plugins install"
+macro_start = 500    # first macro pool number used by "macros install"
 
 [backup]
 dir = "backups"      # where "ma2kit backup" copies show files (git-ignored). Relative to this file.

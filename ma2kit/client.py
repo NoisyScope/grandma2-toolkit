@@ -183,6 +183,11 @@ class CommandResult:
         return found
 
     @property
+    def warnings(self) -> list[str]:
+        """Console warnings such as "WARNING, NO OBJECTS FOUND FOR LABEL" (the command did nothing)."""
+        return [ln.strip() for ln in self.text.splitlines() if ln.strip().upper().startswith("WARNING")]
+
+    @property
     def error_code(self) -> tuple[int, str] | None:
         """The console's "Error #<n>: <MESSAGE>" line, if any."""
         match = ERROR_CODE_RE.search(self.text)
@@ -269,7 +274,12 @@ class MA2Client:
         return self
 
     def __exit__(self, *exc: object) -> None:
-        self.close()
+        if not self.persistent:
+            self.close()
+
+    # When True, `with client:` blocks leave the connection open (used by the menu to keep one
+    # logged-in session across actions). close() still closes it.
+    persistent = False
 
     # -- connection ------------------------------------------------------
     def connect(self) -> str:
