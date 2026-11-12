@@ -58,9 +58,15 @@ for the classes found so far.
 - ✔ Writing a subfixture setting: `cd` into its layer and fixture, then `Assign 1 /<Column>=<value>`
   (column name without spaces, e.g. `/PosX=-5`). The change applies at once (verified with `PosX`).
   ✔ The pan/tilt settings are silently ignored on a fixture type without pan/tilt.
-  ✔ On a moving head `Assign 1 /PanOffset=5` is stored and shows in `List`; `/PanOffset=0` resets it.
-  ○ The physical effect on the beam, and `/PanDMXInvert=On`, `/Swap=On`, are not yet confirmed. MA's own
-  predefined macros use `Assign Fixture Thru /panoffset=$panoffset` on selected fixtures.
+  ✔ On a moving head `Assign 1 /PanOffset=…`, `/TiltOffset=…` and `/TiltDMXInvert=On` are accepted and
+  show in `List`; setting them back resets them.
+  ✔ **The Stage view does not show these settings.** With tilt at 30 in the programmer, adding
+  `TiltOffset=20` or `TiltDMXInvert=On` left the beam in the Stage view where it was. They act on the DMX
+  output only, so checking them needs real fixtures (or a DMX monitor) on granted universes.
+  ○ MA's own predefined macros use `Assign Fixture Thru /panoffset=$panoffset` on selected fixtures.
+- ✔ Without MA hardware (Command Wing or node) onPC sends no DMX: `List DmxUniverse` shows
+  `Granted = No`, `gma.show.getdmx` reads 0. The Stage view still follows the programmer, so fixtures can
+  be moved and checked visually there.
 - ✔ **Fixture types** (`EditSetup/FixtureTypes`, class `CMD_FIXTURE_TYPE`) hold the channel layout:
   properties `LongName`, `ShortName`, `Manufacturer`, `DMX Footprint`, `Instances`, `Mode`.
   Type 1 is always `Universal Attributes` (automatic).

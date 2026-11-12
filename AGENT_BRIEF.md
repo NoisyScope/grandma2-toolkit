@@ -152,10 +152,14 @@ utilities:
   `PanEnc.Invert`, `TiltEnc.Invert`, `PanOffset`, `TiltOffset`, `Swap`. Read them with
   `gma.show.property.get(sub, "PanOffset")` or `List` inside the fixture. Write them with
   `cd "EditSetup"; cd "Layers"; cd <layer>; cd <fixture index>; Assign 1 /PanOffset=...` (method verified
-  with `PosX`; pan/tilt fields are ignored on fixtures without pan/tilt; on beam fixture 100 `PanOffset=5` was stored
-  and reset with the owner present; invert/swap and the physical effect are not yet confirmed).
-  `gma.show.getdmx` read 0 on every channel of that beam, and DmxUniverse 1 showed `Granted = No`, so DMX
-  readback cannot confirm output changes yet.
+  with `PosX`; pan/tilt fields are ignored on fixtures without pan/tilt; on beam fixture 100 `PanOffset`, `TiltOffset` and
+  `TiltDMXInvert` were stored and reset). **The Stage view does not show patch offset/invert**: the owner
+  watched tilt 30 from the programmer move the beam there, but offset +20 and tilt invert changed nothing.
+  They act on DMX output only.
+- **No hardware right now (owner, 2026-11-12):** the Command Wing is not connected, universes show
+  `Granted = No`, `gma.show.getdmx` reads 0. Work targets the software and the Stage view only. Programmer
+  values are safe while no hardware is connected. Consequence for the pan/tilt wizard: its effect can be
+  checked in the patch (`List`, `property.get`) but not visually until real fixtures are connected.
 - The patch exports per layer from inside `EditSetup/Layers` (`Export 3 "name"` → `fixture_layers\name.xml`,
   absolute `<Address>`), which suits the patch helper.
 - `cd` changes the prompt to a tree path; the client handles it. The location is per Telnet session.

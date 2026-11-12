@@ -64,6 +64,7 @@ FOUND FOR LIST` when the pool exists and is empty (✔ both).
 | `ClearSelection` | ✔ Deselect; `Error #72` when nothing was selected |
 | `Clear`, `ClearAll` | ○ Clear selection / programmer (`ClearAll` clears both) |
 | `At 50`, `Fixture 1 At 100`, `At Preset 4.2`, `Full`, `Off` | ○ Set values: **live output** |
+| `Fixture 100; Attribute "Tilt" At 30` | ✔ One attribute of the selection; seen in the Stage view |
 | `Highlight`, `Highlight Off` | ○ Highlight the selection: **live output** |
 | `Align "<>"`, `Align "off"` | ○ Spread values across the selection |
 | `MAtricksReset`, `MAtricks 1` | ○ |
@@ -131,8 +132,9 @@ cd /
 
 Columns that can be assigned this way: `ReacttoMaster`, `PanDMXInvert`, `TiltDMXInvert`, `PanEnc.Invert`,
 `TiltEnc.Invert`, `PanOffset`, `TiltOffset`, `Swap`, `BitmapDisable`, `Color`, `PosX/Y/Z`, `RotX/Y/Z`.
-✔ Pan/tilt columns are ignored for fixture types without pan/tilt. ✔ On a moving head `PanOffset` is
-stored (seen in `List`); the other pan/tilt columns are not yet tried. ○ On selected fixtures MA's
+✔ Pan/tilt columns are ignored for fixture types without pan/tilt. ✔ On a moving head `PanOffset`,
+`TiltOffset` and `TiltDMXInvert` are stored (seen in `List`). ✔ They change the DMX output only: the Stage
+view does not show them. ○ On selected fixtures MA's
 predefined macros also use `Assign Fixture Thru /panoffset=0` from outside `EditSetup`; from the root
 `Assign Fixture 200 /panoffset=5` gave `Error #14` here.
 
