@@ -9,20 +9,24 @@ import socket
 import sys
 from pathlib import Path
 
-from . import __version__, groups
-from .model import ShowModel, compress_ids
+from . import __version__, backup, groups, monitor
 from .client import (
+    CommandResult,
+    Dialog,
+    LoginError,
     MA2Client,
     MA2Error,
-    LoginError,
     RemoteDisabledError,
     risky_reason,
 )
 from .config import Config, load_config
+from .model import ShowModel, compress_ids
+from .plugins import PluginManager
 
 EXPECTED_VERSION = "3.9.61"
 
 
+# -- helpers ---------------------------------------------------------------
 def _client(cfg: Config, dry_run: bool) -> MA2Client:
     return MA2Client(cfg.host, cfg.port, cfg.timeout, cfg.transcript, dry_run=dry_run)
 
@@ -36,6 +40,21 @@ def _connect_and_login(cfg: Config, dry_run: bool) -> MA2Client:
     return client
 
 
+def _model(cfg: Config) -> tuple[MA2Client, ShowModel]:
+    client = _connect_and_login(cfg, dry_run=False)  # reading always talks to the console
+    return client, ShowModel(client)
+
+
+def _guard_write(cfg: Config, model: ShowModel) -> str:
+    """Refuse to change a show that is not listed in [safety] allowed_shows (when the list is set)."""
+    show = model.var("SHOWFILE") or "?"
+    if cfg.allowed_shows and show not in cfg.allowed_shows:
+        raise MA2Error(
+            f"the loaded show '{show}' is not in [safety] allowed_shows in config.toml; refusing to change it"
+        )
+    return show
+
+
 def _confirm(question: str) -> bool:
     try:
         return input(f"{question} [y/N] ").strip().lower() in {"y", "yes"}
@@ -43,17 +62,45 @@ def _confirm(question: str) -> bool:
         return False
 
 
-def _print_result(result) -> None:
+def _ask_dialog(dialog: Dialog) -> int | None:
+    """Let the user answer a console confirmation dialog; Enter or anything invalid = Cancel."""
+    print(f"Console asks: {dialog.question}")
+    for number, label in dialog.options:
+        print(f"  {number}: {label}")
+    try:
+        answer = input("Choice (Enter = Cancel): ").strip()
+    except EOFError:
+        return None
+    return int(answer) if answer.isdigit() else None
+
+
+def _dialog_handler():
+    return _ask_dialog if sys.stdin.isatty() else None
+
+
+def _print_result(result: CommandResult) -> None:
     if not result.sent:
         print(f"(dry-run) {result.command}")
         return
     if result.text:
         print(result.text)
+    if result.late:
+        print(result.late)
     for err in result.errors:
         print(f"! {err}", file=sys.stderr)
 
 
-# -- commands ------------------------------------------------------------
+def _table(headers: list[str], rows: list[list[object]]) -> str:
+    cells = [[str(c) for c in r] for r in rows]
+    widths = [max([len(h)] + [len(r[i]) for r in cells]) for i, h in enumerate(headers)]
+
+    def line(r: list[str]) -> str:
+        return "  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip()
+
+    return "\n".join([line(headers), line(["-" * w for w in widths])] + [line(r) for r in cells])
+
+
+# -- connection ------------------------------------------------------------
 def cmd_doctor(cfg: Config, args: argparse.Namespace) -> int:
     ok = True
 
@@ -74,6 +121,13 @@ def cmd_doctor(cfg: Config, args: argparse.Namespace) -> int:
     except OSError as exc:
         report(False, "console reachable", f"{cfg.host}:{cfg.port} ({exc}); is onPC running?")
         return 1
+
+    try:
+        with socket.create_connection((cfg.host, cfg.monitor_port), timeout=cfg.timeout):
+            pass
+        report(True, "system monitor", f"{cfg.host}:{cfg.monitor_port}")
+    except OSError as exc:
+        report(None, "system monitor", f"{cfg.host}:{cfg.monitor_port} not reachable ({exc})")
 
     client = _client(cfg, dry_run=False)
     try:
@@ -96,20 +150,23 @@ def cmd_doctor(cfg: Config, args: argparse.Namespace) -> int:
             report(False, "login", f"console replied: {exc}")
             return 1
 
-        result = client.send("ListVar")
-        version = _var(result.text, "VERSION")
+        model = ShowModel(client)
+        version = model.var("VERSION")
         if version:
             report(version.startswith(EXPECTED_VERSION), "software version", version)
         else:
             report(None, "software version", "could not read $VERSION from ListVar")
-        show = _var(result.text, "SHOWFILE")
-        report(None, "loaded show", show or "unknown")
+        rights = model.var("USERRIGHTS")
+        report(rights == "Admin" if rights else None, "user rights", rights or "unknown")
+        show = model.var("SHOWFILE") or "unknown"
+        if cfg.allowed_shows:
+            allowed = show in cfg.allowed_shows
+            report(allowed, "loaded show", f"{show} ({'may be changed' if allowed else 'NOT in allowed_shows: read-only'})")
+        else:
+            report(None, "loaded show", f"{show} (allowed_shows not set: any show may be changed)")
+        plugin_path = model.var("PLUGINPATH")
+        report(bool(plugin_path and Path(plugin_path).is_dir()) or None, "plugin folder", plugin_path or "unknown")
     return 0 if ok else 1
-
-
-def _var(text: str, name: str) -> str | None:
-    match = re.search(rf"\${name}\s*=\s*(.+)", text, re.IGNORECASE)
-    return match.group(1).strip() if match else None
 
 
 def cmd_cmd(cfg: Config, args: argparse.Namespace) -> int:
@@ -120,7 +177,7 @@ def cmd_cmd(cfg: Config, args: argparse.Namespace) -> int:
             print("not sent")
             return 1
     with _connect_and_login(cfg, args.dry_run) as client:
-        result = client.send(command)
+        result = client.send(command, confirm=_dialog_handler())
         _print_result(result)
         return 0 if (result.ok or not result.sent) else 2
 
@@ -143,26 +200,27 @@ def cmd_shell(cfg: Config, args: argparse.Namespace) -> int:
                 print("not sent")
                 continue
             try:
-                _print_result(client.send(line))
+                _print_result(client.send(line, confirm=_ask_dialog))
             except MA2Error as exc:
                 print(f"! {exc}", file=sys.stderr)
                 if not client.connected and not args.dry_run:
                     return 1
+        if client.reconnects:
+            print(f"(reconnected {client.reconnects} time(s) during this session)")
     return 0
 
 
-def _table(headers: list[str], rows: list[list[object]]) -> str:
-    cells = [[str(c) for c in r] for r in rows]
-    widths = [max([len(h)] + [len(r[i]) for r in cells]) for i, h in enumerate(headers)]
-    line = lambda r: "  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip()
-    return "\n".join([line(headers), line(["-" * w for w in widths])] + [line(r) for r in cells])
+def cmd_monitor(cfg: Config, args: argparse.Namespace) -> int:
+    print(f"System monitor {cfg.host}:{cfg.monitor_port} (Ctrl+C to stop)")
+    try:
+        for line in monitor.stream(cfg.host, cfg.monitor_port, args.filter, cfg.timeout):
+            print(line, flush=True)
+    except KeyboardInterrupt:
+        print()
+    return 0
 
 
-def _model(cfg: Config) -> tuple[MA2Client, ShowModel]:
-    client = _connect_and_login(cfg, dry_run=False)  # reading always talks to the console
-    return client, ShowModel(client)
-
-
+# -- show (read-only) ------------------------------------------------------
 def cmd_show_summary(cfg: Config, args: argparse.Namespace) -> int:
     client, model = _model(cfg)
     with client:
@@ -178,7 +236,8 @@ def cmd_show_summary(cfg: Config, args: argparse.Namespace) -> int:
         patched = sorted((f.universe, f.address) for f in fx if f.universe)
         span = f"{patched[0][0]}.{patched[0][1]:03d} .. {patched[-1][0]}.{patched[-1][1]:03d}" if patched else "-"
         rows.append([t.no, f"{t.manufacturer} {t.long_name}", t.mode, t.footprint, len(fx), compress_ids([f.fid for f in fx]), span])
-    print(_table(["Type", "Name", "Mode", "Ch", "Qty", "IDs", "Patch"], rows))
+    if rows:
+        print(_table(["Type", "Name", "Mode", "Ch", "Qty", "IDs", "Patch"], rows))
     print()
     print(_table(
         ["Pool", "Used", "Numbers"],
@@ -236,12 +295,14 @@ def cmd_show_group(cfg: Config, args: argparse.Namespace) -> int:
     return 0
 
 
+# -- groups ------------------------------------------------------------------
 def cmd_groups_auto(cfg: Config, args: argparse.Namespace) -> int:
     client, model = _model(cfg)
     with client:
+        start = args.start if args.start is not None else cfg.group_start
         variants = tuple(v.strip().lower() for v in args.variants.split(",")) if args.variants else groups.DEFAULT_VARIANTS
         only = {t.strip().upper() for t in args.types.split(",")} if args.types else None
-        plans = groups.plan_auto_groups(model.fixtures(), model.fixture_types(), args.start, variants, only)
+        plans = groups.plan_auto_groups(model.fixtures(), model.fixture_types(), start, variants, only)
         if not plans:
             print("nothing to create")
             return 0
@@ -259,6 +320,7 @@ def cmd_groups_auto(cfg: Config, args: argparse.Namespace) -> int:
                 print(f"  {c}")
             print("\nNothing was changed. Re-run with --apply to create these groups.")
             return 0
+        _guard_write(cfg, model)
         groups.apply(client, plans)
         created = {i.number: i.name for i in model.pool("Group")}
         missing = [p.no for p in plans if created.get(p.no) != p.name]
@@ -269,15 +331,91 @@ def cmd_groups_auto(cfg: Config, args: argparse.Namespace) -> int:
     return 0
 
 
+# -- plugins -----------------------------------------------------------------
+def _plugins(cfg: Config) -> tuple[MA2Client, PluginManager]:
+    client, model = _model(cfg)
+    return client, PluginManager(model, cfg.plugin_start)
+
+
+def cmd_plugins_list(cfg: Config, args: argparse.Namespace) -> int:
+    client, manager = _plugins(cfg)
+    with client:
+        rows = manager.status()
+        others = {n: s for n, s in manager.pool_slots().items() if n not in {r.name for r in rows}}
+    print(_table(
+        ["Plugin", "Installed", "Description"],
+        [[r.name, f"Plugin {r.slot}" if r.slot is not None else ("files only" if r.files_installed else "no"), r.description] for r in rows],
+    ))
+    if others:
+        print("\nOther plugins in this show: " + ", ".join(f"{s}: {n}" for n, s in sorted(others.items(), key=lambda x: x[1])))
+    return 0
+
+
+def cmd_plugins_install(cfg: Config, args: argparse.Namespace) -> int:
+    client, manager = _plugins(cfg)
+    with client:
+        _guard_write(cfg, manager.model)
+        for name in args.names:
+            slot = manager.install(name, args.slot if len(args.names) == 1 else None)
+            print(f"Installed {name} as Plugin {slot}")
+    return 0
+
+
+def cmd_plugins_update(cfg: Config, args: argparse.Namespace) -> int:
+    client, manager = _plugins(cfg)
+    with client:
+        _guard_write(cfg, manager.model)
+        names = manager.update(args.names or None)
+    print(f"Updated (re-imported into their slots): {', '.join(names)}" if names else "No installed ma2kit plugins to update.")
+    return 0
+
+
+def cmd_plugins_remove(cfg: Config, args: argparse.Namespace) -> int:
+    client, manager = _plugins(cfg)
+    with client:
+        _guard_write(cfg, manager.model)
+        for name in args.names:
+            slot = manager.remove(name)
+            print(f"Removed {name}" + (f" (was Plugin {slot})" if slot is not None else " (files only)"))
+    return 0
+
+
+def cmd_plugins_run(cfg: Config, args: argparse.Namespace) -> int:
+    client, manager = _plugins(cfg)
+    with client:
+        ok, output = manager.run(args.plugin, wait=args.wait)
+    if output:
+        print(output)
+    if ok is None:
+        print("(started; not waiting for it to finish)")
+        return 0
+    return 0 if ok else 2
+
+
+# -- backup ------------------------------------------------------------------
+def cmd_backup(cfg: Config, args: argparse.Namespace) -> int:
+    client, model = _model(cfg)
+    with client:
+        target = backup.backup(model, cfg.backup_dir, cfg.backup_keep)
+    print(f"Saved the show and copied it to {target}")
+    return 0
+
+
 # -- entry point ---------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ma2kit", description="Toolkit for grandMA2 onPC.")
+    parser = argparse.ArgumentParser(
+        prog="ma2kit",
+        description="Toolkit for grandMA2 onPC. Run without arguments for an interactive menu.",
+    )
     parser.add_argument("--version", action="version", version=f"ma2kit {__version__}")
     parser.add_argument("--config", type=Path, help="path to config.toml")
     parser.add_argument("--dry-run", action="store_true", help="print commands instead of sending them")
     sub = parser.add_subparsers(dest="command")
 
-    p = sub.add_parser("doctor", help="check that the console is reachable and the login works")
+    p = sub.add_parser("menu", help="interactive menu")
+    p.set_defaults(func=lambda cfg, args: _run_menu(args))
+
+    p = sub.add_parser("doctor", help="check connection, login, version, loaded show")
     p.set_defaults(func=cmd_doctor)
 
     p = sub.add_parser("cmd", help="send one command line and print the reply")
@@ -288,6 +426,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("shell", help="interactive command line")
     p.set_defaults(func=cmd_shell)
 
+    p = sub.add_parser("monitor", help="follow the console's system monitor (gma.echo output, command log)")
+    p.add_argument("--filter", help="only lines matching this regular expression")
+    p.set_defaults(func=cmd_monitor)
+
+    p = sub.add_parser("backup", help="save the show and keep a timestamped copy of the show file")
+    p.set_defaults(func=cmd_backup)
+
     show = sub.add_parser("show", help="read the loaded show (read-only)").add_subparsers(dest="show_cmd", required=True)
     p = show.add_parser("summary", help="fixtures per type, patch span, pool usage")
     p.set_defaults(func=cmd_show_summary)
@@ -295,7 +440,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--format", choices=["table", "json", "csv"], default="table")
     p.add_argument("--positions", action="store_true", help="include 3D stage positions (uses an XML export)")
     p.set_defaults(func=cmd_show_fixtures)
-    p = show.add_parser("pool", help="list a pool, e.g. Group, Effect, Macro, Layout, Sequence")
+    p = show.add_parser("pool", help="list a pool, e.g. Group, Effect, Macro, Layout, Sequence, Plugin")
     p.add_argument("pool")
     p.set_defaults(func=cmd_show_pool)
     p = show.add_parser("group", help="members of a group, in order (uses an XML export)")
@@ -304,18 +449,45 @@ def build_parser() -> argparse.ArgumentParser:
 
     grp = sub.add_parser("groups", help="group utilities").add_subparsers(dest="groups_cmd", required=True)
     p = grp.add_parser("auto", help="create groups per fixture type (preview unless --apply)")
-    p.add_argument("--start", type=int, default=500, help="first group pool number (default 500)")
+    p.add_argument("--start", type=int, help="first group pool number (default from config, 500)")
     p.add_argument("--variants", help=f"comma list from: {','.join(groups.VARIANTS)} (default: all)")
     p.add_argument("--types", help="only these fixture types (short name or type number), comma list")
     p.add_argument("--apply", action="store_true", help="actually create the groups")
     p.set_defaults(func=cmd_groups_auto)
+
+    plg = sub.add_parser("plugins", help="manage this repo's Lua plugins in the show").add_subparsers(dest="plugins_cmd", required=True)
+    p = plg.add_parser("list", help="repo plugins and where they are installed")
+    p.set_defaults(func=cmd_plugins_list)
+    p = plg.add_parser("install", help="copy plugin files to the console and import them")
+    p.add_argument("names", nargs="+")
+    p.add_argument("--slot", type=int, help="plugin pool number (single plugin only; default: first free from config)")
+    p.set_defaults(func=cmd_plugins_install)
+    p = plg.add_parser("update", help="re-copy installed plugins and import them again over their slots")
+    p.add_argument("names", nargs="*", help="default: every installed ma2kit plugin")
+    p.set_defaults(func=cmd_plugins_update)
+    p = plg.add_parser("remove", help="delete plugins from the pool and their files")
+    p.add_argument("names", nargs="+")
+    p.set_defaults(func=cmd_plugins_remove)
+    p = plg.add_parser("run", help="run a plugin by name or pool number and show its output")
+    p.add_argument("plugin")
+    p.add_argument("--wait", type=float, default=30.0, help="seconds to wait for a ma2kit plugin to finish (0 = don't wait)")
+    p.set_defaults(func=cmd_plugins_run)
     return parser
+
+
+def _run_menu(args: argparse.Namespace) -> int:
+    from .menu import run_menu
+
+    base = (["--config", str(args.config)] if args.config else []) + (["--dry-run"] if args.dry_run else [])
+    return run_menu(lambda argv: main(base + argv))
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            return _run_menu(args)
         parser.print_help()
         return 0
     try:

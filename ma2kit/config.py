@@ -11,12 +11,25 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 @dataclass
 class Config:
+    # [console]
     host: str = "127.0.0.1"
     port: int = 30000
     user: str = "toolkit"
     password: str = field(default="", repr=False)  # never shown in repr/logs
     timeout: float = 5.0
+    # [log]
     transcript: Path | None = None
+    # [safety]
+    allowed_shows: list[str] = field(default_factory=list)  # empty = any show may be changed
+    # [pools]
+    group_start: int = 500
+    plugin_start: int = 100
+    # [backup]
+    backup_dir: Path = REPO_ROOT / "backups"
+    backup_keep: int = 20
+    # [monitor]
+    monitor_port: int = 30001
+
     source: Path | None = None  # file the config was read from, None = defaults
 
 
@@ -40,15 +53,25 @@ def load_config(explicit: Path | None = None) -> Config:
     cfg = Config()
     if path:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
+        base = path.parent
         console = data.get("console", {})
         cfg.host = str(console.get("host", cfg.host))
         cfg.port = int(console.get("port", cfg.port))
         cfg.user = str(console.get("user", cfg.user))
         cfg.password = str(console.get("password", cfg.password))
         cfg.timeout = float(console.get("timeout", cfg.timeout))
-        transcript = data.get("log", {}).get("transcript")
-        if transcript:
-            cfg.transcript = (path.parent / transcript).resolve()
+        if transcript := data.get("log", {}).get("transcript"):
+            cfg.transcript = (base / transcript).resolve()
+        shows = data.get("safety", {}).get("allowed_shows", [])
+        cfg.allowed_shows = [shows] if isinstance(shows, str) else [str(s) for s in shows]
+        pools = data.get("pools", {})
+        cfg.group_start = int(pools.get("group_start", cfg.group_start))
+        cfg.plugin_start = int(pools.get("plugin_start", cfg.plugin_start))
+        backup = data.get("backup", {})
+        if bdir := backup.get("dir"):
+            cfg.backup_dir = (base / bdir).resolve()
+        cfg.backup_keep = int(backup.get("keep", cfg.backup_keep))
+        cfg.monitor_port = int(data.get("monitor", {}).get("port", cfg.monitor_port))
         cfg.source = path
     if env_pw := os.environ.get("MA2KIT_PASSWORD"):
         cfg.password = env_pw

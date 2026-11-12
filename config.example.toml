@@ -8,6 +8,22 @@ user = "toolkit"     # MA user created for this tool
 password = ""        # the MA user's password (or set the MA2KIT_PASSWORD environment variable)
 timeout = 5.0        # seconds to wait for a command's reply
 
+[safety]
+# Shows that ma2kit may change (store groups, install plugins...). Empty = any show.
+# Example: allowed_shows = ["my_test_show"]
+allowed_shows = []
+
+[pools]
+group_start = 500    # first group number used by "groups auto"
+plugin_start = 100   # first plugin pool number used by "plugins install"
+
+[backup]
+dir = "backups"      # where "ma2kit backup" copies show files (git-ignored). Relative to this file.
+keep = 20            # copies kept per show; older ones are deleted
+
+[monitor]
+port = 30001         # system monitor stream (read-only, gma.echo output appears here)
+
 [log]
 # Every command sent is appended here (password masked). Relative to this file.
 transcript = "logs/transcript.log"

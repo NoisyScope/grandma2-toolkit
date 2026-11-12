@@ -1,19 +1,23 @@
 # grandma2-toolkit
 
 Tools for **grandMA2 onPC v3.9.61**: a Python CLI (`ma2kit`) that drives the console over its Telnet
-command line, plus (soon) Lua plugins that run inside it. Focus: effects, patching, and pan/tilt
-normalization of moving heads.
+command line, and a manager for Lua plugins that run inside it. Everything reads the loaded show at
+runtime, so it works with any fixtures and layout.
 
-> **Safety:** with an MA Command Wing or node connected, commands act on real fixtures. Develop
-> against a throwaway show, and save your show before experimenting.
+> **Safety:** with an MA Command Wing or node connected, commands act on real fixtures. Set
+> `[safety] allowed_shows` to a test show while experimenting, and run `ma2kit backup` first.
 
 ## Status
 
 | Part | State |
 |---|---|
-| Telnet client, `doctor`, `cmd`, `shell` | working, tested offline and against onPC 3.9.61 |
-| Show reader (`show ...`), auto groups (`groups auto`) | working, tested offline and against onPC 3.9.61 |
-| Plugin manager, color picker, effects, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
+| Connection: Telnet client with dialog handling and auto-reconnect, `doctor`, `cmd`, `shell`, `monitor` | working |
+| Interface: interactive menu | working |
+| Show reader (`show ...`), auto groups (`groups auto`), `backup` | working |
+| Plugin manager (`plugins ...`) and Lua helper library | working |
+| Color picker, effect helpers, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
+
+All "working" parts are tested offline and against onPC 3.9.61.
 
 ## Quick start (Windows, Python 3.11+)
 
@@ -26,26 +30,36 @@ normalization of moving heads.
    ```
 3. Configure: copy `config.example.toml` to `config.toml` and set the user and password.
    `config.toml` is git-ignored. Alternatively set the `MA2KIT_PASSWORD` environment variable.
-4. Check the connection:
+4. Check the connection, then open the menu:
    ```powershell
    .\.venv\Scripts\ma2kit.exe doctor
+   .\.venv\Scripts\ma2kit.exe
    ```
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `ma2kit doctor` | Checks config, that onPC is reachable, Telnet is enabled, the login works, and the software version. |
+| `ma2kit` / `ma2kit menu` | Interactive numbered menu for everything below. |
+| `ma2kit doctor` | Checks config, connection, Telnet, login, version, user rights, loaded show, plugin folder. |
 | `ma2kit cmd "List Group"` | Sends one command line and prints the reply. |
-| `ma2kit shell` | Interactive command line with the console's prompt. |
+| `ma2kit shell` | Interactive command line; asks you when the console opens a dialog. |
+| `ma2kit monitor [--filter REGEX]` | Follows the console's system monitor (plugin output, command log). |
+| `ma2kit backup` | Saves the show and keeps a timestamped copy in `backups/`. |
 | `ma2kit show summary` | Fixtures per type, patch span, and pool usage. |
 | `ma2kit show fixtures` | All fixtures as a table, JSON or CSV; `--positions` adds stage X/Y/Z. |
 | `ma2kit show pool <Pool>` / `show group <n>` | Any pool's contents; a group's members in order. |
-| `ma2kit groups auto [--apply]` | Previews, then creates, ALL/ODD/EVEN/halves/out-in groups per fixture type into empty slots from 500. See [docs/06](docs/06-show-reader-and-groups.md). |
+| `ma2kit groups auto [--apply]` | Previews, then creates, ALL/ODD/EVEN/halves/out-in groups per fixture type. |
+| `ma2kit plugins list / install / update / run / remove` | Puts this repo's Lua plugins into the show and runs them. |
 | `--dry-run` (global) | Prints what would be sent, sends nothing. |
 
-`Delete`, `NewShow`, `LoadShow`, `Shutdown`/`Reboot`/`Restart` and anything with `/nc` ask for confirmation first
-(`cmd --yes` skips it). Every command sent is appended to `logs/transcript.log`, with the password masked.
+## Documentation
+
+- [04 Remote control](docs/04-remote-control.md): Telnet setup, reply formats, dialogs (verified on 3.9.61)
+- [06 Show reader and auto groups](docs/06-show-reader-and-groups.md)
+- [07 Lua plugins](docs/07-plugins.md): writing plugins, the helper library, how install/update work
+- [08 Menu, backup, monitor and safety](docs/08-cli-and-safety.md)
+- [CHANGELOG](CHANGELOG.md)
 
 ## Development
 
@@ -53,7 +67,7 @@ normalization of moving heads.
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Tests run offline against a fake console (`tests/fake_ma2.py`) that mimics the real Telnet greeting.
+Tests run offline against a fake console (`tests/fake_ma2.py`) built from replies captured on onPC 3.9.61.
 
 ## Licence
 

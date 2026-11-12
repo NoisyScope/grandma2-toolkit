@@ -57,7 +57,40 @@ Group 2 2    PAR_ALL
   `ma2kit doctor` uses it for the version and loaded-show checks.
 - `List Group` lists the group pool: `Group <id> <no>  <name>`.
 
+- The echo normalises keywords: `Lua "..."` is echoed as `Executing : LUA "..."`.
+
+## Output after the prompt (verified)
+
+Some commands return to the prompt before they finish. `Plugin N` prints the prompt at once; the plugin's
+`gma.feedback()` text arrives later, right after the prompt: ` [Group]>MA2KIT_PROBE feedback`. The one-line
+`Lua "..."` command behaves the same way. `ma2kit` keeps such text in `CommandResult.late` and can wait for
+a marker with `MA2Client.wait_for()`.
+
+## Confirmation dialogs (verified)
+
+```
+ATTENTION: Please confirm! : Reload plugin engine ? :
+[1]: Ok
+ 2 : Cancel
+```
+
+```
+Overwrite Confirmation : At the import destination already exists object "ma2kit_info 100". :
+[1]: Overwrite
+ 2 : Overwrite|All
+ 3 : Insert
+ 4 : Insert|All
+ 5 : Cancel
+```
+
+The default option is in brackets. The console waits until an option number is sent and replies
+` - Selected <label>`, then the prompt. `/nc` on a command skips the dialog. `ma2kit` answers Cancel unless
+a handler (or the person in `shell`) picks another option.
+
 ## How `ma2kit` decides a reply is complete
 
-There is no end-of-reply marker. The client reads until the text ends with a prompt and then no new data
-arrives for 0.3 s, or fails after the configured timeout (5 s default).
+There is no end-of-reply marker. After sending, the client looks for the command's echo, then for a prompt
+after it (or a dialog), and returns once no new data arrives for 0.3 s; it fails after the configured
+timeout (5 s default). Output that arrives between commands is logged to the transcript as unsolicited.
+If the console closed the connection, the next command reconnects and logs in again; a command is only
+resent when it certainly never reached the console.

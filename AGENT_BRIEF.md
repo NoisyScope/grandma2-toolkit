@@ -135,6 +135,20 @@ types, pools, group members and stage positions via temporary XML exports. **Pha
 done** (`ma2kit/groups.py`, `ma2kit groups auto`): created groups 500-514 in the test show. See
 `docs/06-show-reader-and-groups.md`. 30 offline tests.
 
+**0.2.0 (owner's direction: universal features first; connection, interface, functionality):**
+Phase 2 finished (dialog handling, late output, echo normalisation, auto-reconnect), Phase 4 done
+(`ma2kit plugins ...`, `lua/lib/ma2kit.lua`, `docs/07-plugins.md`), Phase 5 item 6 done (`backup`, `doctor`
+checks `[safety] allowed_shows`), `monitor` added, Phase 6 menu done (`ma2kit` with no arguments).
+50 offline tests. Macro manager (install/remove macro XML) is not built yet.
+
+**Owner's rule: build generic features.** Never hard-code fixture types, IDs, group numbers, positions or
+layouts from the test show; read everything from the loaded show at runtime. Rig-specific ideas wait
+until the owner asks.
+
+**Corrections to section 3 found on 3.9.61:** the show stores plugin code at import, so `ReloadPlugins`
+does not load edited files (re-import over the slot instead); `Lua "..."` exists and runs one line;
+`gma.cmd` returns nil or an error string; dialogs are answered by sending the option number.
+
 **Test show:** the show currently loaded in onPC is the owner's designated test show. It is backed up,
 holds nothing important, and uses the owner's usual fixture libraries and layout. You may store, delete,
 re-patch or break anything in it without asking. Its name is deliberately not written here (public
