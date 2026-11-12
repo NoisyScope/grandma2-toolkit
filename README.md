@@ -7,12 +7,16 @@ runtime, so it works with any fixtures and layout.
 > **Safety:** with an MA Command Wing or node connected, commands act on real fixtures. Set
 > `[safety] allowed_shows` to a test show while experimenting, and run `ma2kit backup` first.
 
+![The ma2kit menu](docs/images/menu-summary.svg)
+
+More screenshots: [docs/08](docs/08-cli-and-safety.md#screenshots).
+
 ## Status
 
 | Part | State |
 |---|---|
 | Connection: Telnet client with dialog handling and auto-reconnect, `doctor`, `cmd`, `shell`, `monitor` | working |
-| Interface: interactive menu | working |
+| Interface: interactive terminal menu (Python) with screenshots in [docs/08](docs/08-cli-and-safety.md#screenshots) | working |
 | Show reader (`show ...`), auto groups (`groups auto`), `backup` | working |
 | Plugin manager (`plugins ...`) and Lua helper library | working |
 | Macro manager (`macros ...`), batch files, show checks, free slots | working |

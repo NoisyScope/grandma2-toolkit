@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Screenshots of the menu and `doctor` in `docs/images/`, shown in the README and doc 08.
+- `tools/screenshots.py` remakes them from the real menu with scripted input, with the show name,
+  computer name and user folder replaced.
+
 ## 0.4.0
 
 - Reference docs: `01-how-grandma2-works`, `02-lua-api`, `03-command-cheatsheet`, `05-install-and-setup`,

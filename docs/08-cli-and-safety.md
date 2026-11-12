@@ -2,33 +2,49 @@
 
 ## Interactive menu
 
-Run `ma2kit` with no arguments (or `ma2kit menu`) for a numbered menu:
+The interface is a plain-text menu in the terminal, written in Python (`ma2kit/menu.py`, no extra
+libraries). Run `ma2kit` with no arguments (or `ma2kit menu`); type a number and press Enter:
 
-```
-ma2kit - grandMA2 toolkit
-  127.0.0.1:30000  user toolkit  show my_test_show (may be changed)
-   1  Status check (connection, login, show)
-   2  Show summary
-   3  List fixtures
-   4  Browse a pool
-   5  Group members
-   6  Check the show (patch, names)
-   7  Find free pool slots
-   8  Auto groups
-   9  Plugins
-  10  Macros
-  11  Run a command file (batch)
-  12  Backup the show
-  13  System monitor (Ctrl+C to stop)
-  14  Command shell
-   0  Quit
-```
+![Main menu](images/menu-main.svg)
 
 Every entry runs the same code as the matching subcommand, so anything in the menu can also be scripted.
 The menu keeps **one logged-in session** for all actions (the command shell included), reconnecting by
 itself if the console drops it; the header line shows the connection, user and loaded show on every
 redraw. `Status check` deliberately tests a fresh connection. Invalid input is reported and the menu
 carries on.
+
+### Screenshots
+
+Taken on onPC 3.9.61 with a test show (its name replaced by `demo_show`). Typed input is in blue.
+
+**2 Show summary**: fixture types with their patch span, and how full each pool is.
+
+![Show summary](images/menu-summary.svg)
+
+**6 Check the show**: patch overlaps, addresses past 512, unpatched fixtures and duplicate names.
+
+![Check the show](images/menu-check.svg)
+
+**7 Find free pool slots**: the first run of free numbers in a pool, before storing anything.
+
+![Find free pool slots](images/menu-free.svg)
+
+**9 Plugins**: a submenu to list, install, update, remove and run this repo's Lua plugins.
+
+![Plugins submenu](images/menu-plugins.svg)
+
+**`ma2kit doctor`** (also menu entry 1): checks every step from the config file to the loaded show.
+
+![ma2kit doctor](images/cli-doctor.svg)
+
+The images are made by `tools/screenshots.py`, which runs the real menu with scripted input against the
+console (read-only actions only) and replaces the show name, computer name and Windows user folder
+before writing them. Run it again after changing the menu:
+
+```powershell
+.\.venv\Scripts\python.exe tools\screenshots.py              # all images
+.\.venv\Scripts\python.exe tools\screenshots.py menu-main    # one image
+```
 
 ## Backup
 
