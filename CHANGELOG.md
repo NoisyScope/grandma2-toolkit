@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- Reference docs: `01-how-grandma2-works`, `02-lua-api`, `03-command-cheatsheet`, `05-install-and-setup`,
+  each statement marked as checked on 3.9.61 or not.
+- Read-only plugins `ma2kit_api_dump` (lists the Lua environment and every `gma.*` function) and
+  `ma2kit_inspect` (class, children and properties of any object, chosen with `$MA2KIT_INSPECT`).
+- Client: recognises the tree-path prompt after `cd` (`EditSetup/Layers 4 >`); before, any command after a
+  `cd` timed out. New `MA2Client.poll()` returns feedback that arrives after a reply.
+- Batch runs print late feedback (from `Lua` or plugin lines) under the step that caused it.
+- `cmd` and `batch` no longer print each console error twice.
+
 ## 0.3.0
 
 - Menu keeps one logged-in session for all actions and shows connection, user and loaded show in its

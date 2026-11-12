@@ -27,7 +27,9 @@ enabled. Use a real password and turn Telnet off on untrusted show networks.
 | Telnet = Login Enabled | ASCII-art "MA" banner, `Logged in as User 'guest'`, then ` [Group]>Please login !` and ` [Group]>` |
 
 - Lines end with `\r\n` or `\n\r`, mixed, and contain ANSI colour codes.
-- The prompt is `[<default keyword>]>`, e.g. `[Group]>` or `[Channel]>`, with nothing after it.
+- At the root of the object tree the prompt is `[<default keyword>]>`, e.g. `[Group]>` or `[Channel]>`.
+  After `cd` into the tree it is the path followed by ` >`, e.g. `EditSetup/Layers 4/PAR_LED 3 >`.
+  `ma2kit` recognises both. The `cd` location belongs to the Telnet session: a new login starts at the root.
 
 ## Logging in (verified)
 
@@ -63,8 +65,9 @@ Group 2 2    PAR_ALL
 
 Some commands return to the prompt before they finish. `Plugin N` prints the prompt at once; the plugin's
 `gma.feedback()` text arrives later, right after the prompt: ` [Group]>MA2KIT_PROBE feedback`. The one-line
-`Lua "..."` command behaves the same way. `ma2kit` keeps such text in `CommandResult.late` and can wait for
-a marker with `MA2Client.wait_for()`.
+`Lua "..."` command behaves the same way. `ma2kit` keeps such text in `CommandResult.late`, can wait for
+a marker with `MA2Client.wait_for()`, and returns anything that arrives later with `MA2Client.poll()`
+(batch runs print it under the step that caused it).
 
 ## Confirmation dialogs (verified)
 

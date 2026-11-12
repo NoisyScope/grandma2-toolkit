@@ -116,8 +116,7 @@ def _print_result(result: CommandResult) -> None:
         print(result.text)
     if result.late:
         print(result.late)
-    for err in result.errors:
-        print(f"! {err}", file=sys.stderr)
+    # Error lines are already part of result.text; the exit code tells scripts the command failed.
 
 
 def _table(headers: list[str], rows: list[list[object]]) -> str:

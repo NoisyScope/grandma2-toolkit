@@ -75,6 +75,7 @@ class FakeMA2:
         # Telnet negotiation the client must ignore, then the greeting.
         conn.sendall(bytes([255, 251, 1]) + GREETING.encode())
         prompt = "Group"
+        path: list[str] = []  # `cd` location; the prompt shows it as "A/B >" (verified on 3.9.61)
         pending_dialog: str | None = None
         for line in self._lines(conn):
             self.received.append(line)
@@ -95,6 +96,18 @@ class FakeMA2:
                     (echo + f"\nATTENTION: Please confirm! : {self.dialogs[line]} :\n\r[1]: Ok\n\r 2 : Cancel\n\r").encode()
                 )
                 continue
+            cd = re.match(r"^cd\s*(.*)$", line, re.IGNORECASE)
+            if cd:
+                target = cd.group(1).strip().strip('"')
+                if target == "/":
+                    path = []
+                elif target == "..":
+                    path = path[:-1]
+                elif target:
+                    path = path + [target]
+                where = f"{'/'.join(path)} >" if path else f" [{prompt}]>"
+                conn.sendall(f"\x1b[0mExecuting : ChangeDest {cd.group(1).strip()}\n\r\n\r{where}".encode())
+                continue
             login = LOGIN_RE.match(line)
             if login:
                 user, pw = login.groups()
@@ -107,7 +120,8 @@ class FakeMA2:
                 reply = echo + self.responses.get(line, "")
             else:
                 reply = echo + error + "Error #14: OBJECT DOES NOT EXIST\n\r"
-            conn.sendall(f"{reply}\n\r \r\n\r [{prompt}]>".encode())
+            where = f"{'/'.join(path)} >" if path else f" [{prompt}]>"
+            conn.sendall(f"{reply}\n\r \r\n\r{where}".encode())
             if line in self.late:
                 time.sleep(0.05)
                 conn.sendall(self.late[line].encode())

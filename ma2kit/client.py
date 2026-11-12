@@ -25,10 +25,19 @@ from pathlib import Path
 from typing import Callable
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
-PROMPT_RE = re.compile(r"\[([^\[\]\r\n]+)\]>[ \t]*$")
+# Two prompt forms (verified on 3.9.61):
+#   at the root of the object tree, the default keyword in brackets:  " [Group]>"
+#   after `cd` (ChangeDest) into the tree, the path at line start:     "EditSetup/Layers 4/PAR_LED 3 >"
+_PROMPT = r"\[(?P<kw>[^\[\]\r\n]+)\]>|^(?P<path>[A-Za-z][^\r\n>=\[\]:]*?) >"
+PROMPT_RE = re.compile(rf"(?:{_PROMPT})[ \t]*\Z", re.MULTILINE)
 # A prompt anywhere: output that arrives later (plugin feedback) is printed right after it,
 # e.g. " [Group]>MA2KIT_PROBE feedback" (verified on 3.9.61).
-ANY_PROMPT_RE = re.compile(r"\[([^\[\]\r\n]+)\]>")
+ANY_PROMPT_RE = re.compile(_PROMPT, re.MULTILINE)
+
+
+def prompt_text(match: re.Match) -> str:
+    """The keyword or tree path of a prompt match."""
+    return match.group("kw") or match.group("path")
 ERROR_RE = re.compile(r"^.*\b(error\b.*|(illegal|unknown) command.*)$", re.IGNORECASE | re.MULTILINE)
 ERROR_CODE_RE = re.compile(r"^Error #(\d+):\s*(.*)$", re.MULTILINE)
 ECHO_PREFIX = "Executing : "
@@ -201,7 +210,7 @@ class CommandResult:
 def split_prompt(text: str) -> tuple[str, str | None]:
     """Split a reply into (body, prompt); the body loses trailing blank lines."""
     match = PROMPT_RE.search(text)
-    body, prompt = (text[: match.start()], match.group(1)) if match else (text, None)
+    body, prompt = (text[: match.start()], prompt_text(match)) if match else (text, None)
     return body.strip("\n").rstrip(), prompt
 
 
@@ -234,7 +243,7 @@ def split_reply(text: str, echo: str | None) -> tuple[str, str, str | None, str]
         return before, text[start:].strip("\n").rstrip(), None, ""
     body = text[start : match.start()].strip("\n").rstrip()
     after = text[match.end() :].strip()
-    return before, body, match.group(1), after
+    return before, body, prompt_text(match), after
 
 
 def strip_echo(text: str) -> str:
@@ -267,6 +276,7 @@ class MA2Client:
         self._secrets: list[str] = []
         self._credentials: tuple[str, str] | None = None
         self._pending = ""  # output received after the last reply's prompt, not yet consumed
+        self._delivered = 0  # how much of _pending was already returned as CommandResult.late
         self.sent_log: list[str] = []  # commands sent (or recorded in dry-run), masked
 
     # -- context manager -------------------------------------------------
@@ -288,7 +298,7 @@ class MA2Client:
             return ""
         self._log(f"connect {self.host}:{self.port}")
         self._sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
-        self._pending = ""
+        self._pending, self._delivered = "", 0
         greeting = self._read_reply(self.timeout, echo=None)
         if REMOTE_DISABLED in greeting:
             self.close()
@@ -298,7 +308,7 @@ class MA2Client:
         users = LOGGED_IN_RE.findall(greeting)
         self.user = users[-1] if users else None
         self.greeting = greeting
-        prompts = ANY_PROMPT_RE.findall(greeting)
+        prompts = [prompt_text(m) for m in ANY_PROMPT_RE.finditer(greeting)]
         self.prompt = prompts[-1] if prompts else None
         return greeting
 
@@ -397,6 +407,7 @@ class MA2Client:
         if prompt:
             self.prompt = prompt
         self._pending = after
+        self._delivered = len(after)  # already returned as `late`; poll() skips it
         self._log(text)
         if after:
             self._log(f"(after prompt) {after}")
@@ -419,6 +430,7 @@ class MA2Client:
             match = regex.search(text)
             if match:
                 self._pending = text[match.end() :]
+                self._delivered = max(0, self._delivered - match.end())
                 return self._mask(text[: match.end()])
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -433,6 +445,27 @@ class MA2Client:
                 self._drop()
                 raise MA2Error("connection closed while waiting")
             raw += chunk
+
+    def poll(self) -> str:
+        """Output that arrived since the last reply (e.g. plugin or `Lua` feedback); never blocks.
+
+        Prompts in it are removed. Returns "" in dry-run mode, when nothing is waiting, or when the
+        connection has closed (the next send() reconnects).
+        """
+        if self.dry_run or self._sock is None:
+            return ""
+        stray = self._drain()
+        if stray is None:
+            self._drop()
+            stray = ""
+        text = self._pending[self._delivered :] + stray
+        self._pending, self._delivered = "", 0
+        text = ANY_PROMPT_RE.sub("\n", text)
+        lines = [line.rstrip() for line in text.split("\n") if line.strip()]
+        result = self._mask("\n".join(lines))
+        if result:
+            self._log(f"(after reply) {result}")
+        return result
 
     # -- internals -------------------------------------------------------
     def _ensure_connected(self) -> None:

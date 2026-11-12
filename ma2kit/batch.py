@@ -65,7 +65,19 @@ def run(client: MA2Client, steps: list[Step], keep_going: bool = False, strict: 
     Stops at the first error unless keep_going; with strict, a console WARNING counts as an error.
     """
     results: list[StepResult] = []
+
+    def show_later() -> None:
+        # Feedback that arrived after a step's reply (plugins, `Lua "..."`) belongs to that step.
+        later = client.poll()
+        if later:
+            for out_line in later.splitlines():
+                echo(f"        {out_line}")
+            if results:
+                prev = results[-1]
+                prev.output = "\n".join(x for x in (prev.output, later) if x)
+
     for step in steps:
+        show_later()
         if step.command is None:
             echo(f"  line {step.line_no}: wait {step.wait:g}s")
             if not client.dry_run:
@@ -82,9 +94,10 @@ def run(client: MA2Client, steps: list[Step], keep_going: bool = False, strict: 
         if output.strip():
             for out_line in output.splitlines():
                 echo(f"        {out_line}")
-        if not ok:
-            for err in result.errors:
-                echo(f"        ! {err}")
-            if not keep_going:
-                break
+        if not ok and not keep_going:
+            break
+    if results:
+        if not client.dry_run:
+            time.sleep(0.3)  # let feedback from the last step arrive
+        show_later()
     return results

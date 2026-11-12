@@ -16,6 +16,7 @@ runtime, so it works with any fixtures and layout.
 | Show reader (`show ...`), auto groups (`groups auto`), `backup` | working |
 | Plugin manager (`plugins ...`) and Lua helper library | working |
 | Macro manager (`macros ...`), batch files, show checks, free slots | working |
+| Reference docs on grandMA2 (concepts, Lua API, commands) and inspection plugins | written, checked on 3.9.61 |
 | Color picker, effect helpers, patch helper, pan/tilt wizard | planned, see [AGENT_BRIEF.md](AGENT_BRIEF.md) |
 
 All "working" parts are tested offline and against onPC 3.9.61.
@@ -23,7 +24,7 @@ All "working" parts are tested offline and against onPC 3.9.61.
 ## Quick start (Windows, Python 3.11+)
 
 1. In onPC: **Setup → Console → Global Settings → Telnet = Login Enabled**, and create an MA user for
-   the tool (**Setup → Console → User & Profiles Setup**). Details: [docs/04-remote-control.md](docs/04-remote-control.md).
+   the tool (**Setup → Console → User & Profiles Setup**). Details: [docs/05-install-and-setup.md](docs/05-install-and-setup.md).
 2. Install:
    ```powershell
    python -m venv .venv
@@ -60,7 +61,16 @@ All "working" parts are tested offline and against onPC 3.9.61.
 
 ## Documentation
 
-- [04 Remote control](docs/04-remote-control.md): Telnet setup, reply formats, dialogs (verified on 3.9.61)
+grandMA2 reference (each statement marked as checked on 3.9.61 or not):
+
+- [01 How grandMA2 works](docs/01-how-grandma2-works.md): the object tree, fixtures and patch, pools, files on disk
+- [02 Lua API](docs/02-lua-api.md): every `gma.*` function on 3.9.61, object classes, properties
+- [03 Command cheat sheet](docs/03-command-cheatsheet.md): syntax, reading, storing, import/export, patch editing
+- [04 Remote control](docs/04-remote-control.md): Telnet setup, reply formats, dialogs
+
+Using the toolkit:
+
+- [05 Install and setup](docs/05-install-and-setup.md): onPC settings, install, config, troubleshooting
 - [06 Show reader and auto groups](docs/06-show-reader-and-groups.md)
 - [07 Lua plugins](docs/07-plugins.md): writing plugins, the helper library, how install/update work
 - [08 Menu, backup, monitor and safety](docs/08-cli-and-safety.md)

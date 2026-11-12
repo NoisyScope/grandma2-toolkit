@@ -143,8 +143,22 @@ checks `[safety] allowed_shows`), `monitor` added, Phase 6 menu done (`ma2kit` w
 
 **0.3.0:** menu keeps one session; `batch`; macro manager (`macros ...`, `docs/09-macros-batch-checks.md`);
 `show check` (overlaps, overflow, unpatched, duplicate names); `show free`; doctor cleans temp exports.
-62 offline tests. Phase 4 is complete. Remaining phases: color picker, effect helpers, patch helper
-(import from CSV), pan/tilt wizard, plus reference docs 01-03 and 05.
+62 offline tests. Phase 4 is complete.
+
+**0.4.0:** reference docs `docs/01`–`03` and `05` written and checked live (Phase 1 docs done). Read-only
+plugins `ma2kit_api_dump` and `ma2kit_inspect` gather the facts. Findings that matter for the remaining
+utilities:
+- Pan/tilt patch settings live on the **subfixture** (`child(fixture, 0)`): `PanDMXInvert`, `TiltDMXInvert`,
+  `PanEnc.Invert`, `TiltEnc.Invert`, `PanOffset`, `TiltOffset`, `Swap`. Read them with
+  `gma.show.property.get(sub, "PanOffset")` or `List` inside the fixture. Write them with
+  `cd "EditSetup"; cd "Layers"; cd <layer>; cd <fixture index>; Assign 1 /PanOffset=...` (method verified
+  with `PosX`; pan/tilt fields are ignored on fixtures without pan/tilt; **not yet tried on a moving head**,
+  which needs the owner present).
+- The patch exports per layer from inside `EditSetup/Layers` (`Export 3 "name"` → `fixture_layers\name.xml`,
+  absolute `<Address>`), which suits the patch helper.
+- `cd` changes the prompt to a tree path; the client handles it. The location is per Telnet session.
+68 offline tests. Remaining phases: color picker, effect helpers, patch helper (import from CSV),
+pan/tilt wizard.
 
 **Owner's rule: build generic features.** Never hard-code fixture types, IDs, group numbers, positions or
 layouts from the test show; read everything from the loaded show at runtime. Rig-specific ideas wait
@@ -170,8 +184,8 @@ owner present (rule 1 below).
 | 200–219 | SUPER BRIGHT "PAR280 SLIM" (LED PAR) | 9CH | 2.001–2.180, consecutive |
 
 Existing pools: groups 1–6 (`ALL`, `ALL_ESC`, `8R_ESC`, `SYM_8R_ALL`, `PAR_ALL`, `SYM_PAR_ALL`); effects 1–4,
-17, 18, 24, 25; layouts 1, 2, 3, 6; MAtricks 1; plugin 1 (`LUA`); no macros. Fixture positions (XYZ) are
-all 0. Fixtures 108–111 reuse the names "BEAM8R_RING 1–4" of fixtures 100–103 (a naming slip the auto-tools
+17, 18, 24, 25; layouts 1, 2, 3, 6; MAtricks 1; plugin 1 (`LUA`); no macros. Fixture-level positions (XYZ) are
+all 0; the stage positions are stored on the subfixtures. Fixtures 108–111 reuse the names "BEAM8R_RING 1–4" of fixtures 100–103 (a naming slip the auto-tools
 could detect). The beams are the targets for the pan/tilt normalization wizard.
 
 Useful observations: `List Fixture` columns are `Name FixId ChaId FixtureType Patch ...` with patch as
