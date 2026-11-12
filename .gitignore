@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+
+# Local configuration (contains the console password)
+config.toml
+
+# Runtime output
+logs/
+exports/
+backups/
+
+# grandMA2 show files and backups: never commit
+*.show
+*.show.gz
+*.backup
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
