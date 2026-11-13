@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "grandma2": {
+      "command": "C:\\path\\to\\grandma2-toolkit\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "ma2kit.mcp_server"],
+      "env": {
+        "MA2KIT_CONFIG": "C:\\path\\to\\grandma2-toolkit\\config.toml"
+      }
+    }
+  }
+}

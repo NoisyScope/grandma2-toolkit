@@ -1,5 +1,10 @@
 # Agent brief: grandMA2 onPC toolkit
 
+> **Direction since 2026-11-12:** the main product is the **MCP server** (`ma2kit-mcp`, `docs/11-mcp-server.md`),
+> so an AI agent can set up shows in grandMA2. The CLI toolkit described below stays as a secondary tool.
+> New capabilities go into the server (tools or guide recipes) first. The plan below is kept as history and
+> for its safety rules, which still apply.
+
 You are building a toolkit that talks to **grandMA2 onPC v3.9.61** on this Windows PC to speed up
 three jobs for a lighting operator: **effects**, **patching**, and **pan/tilt normalization of moving
 heads**. This file is your full set of instructions. Read it all before touching anything.

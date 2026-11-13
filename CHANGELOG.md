@@ -2,6 +2,9 @@
 
 ## 0.5.0
 
+- The README now presents the MCP server as the main product, with the CLI toolkit second;
+  `mcp.example.json` holds a ready client entry.
+
 - **MCP server** `ma2kit-mcp` (`ma2kit/mcp_server.py`, standard library only, stdio): tools `ma2_status`,
   `ma2_command`, `ma2_list`, `ma2_set`, `ma2_export`, `ma2_import`, `ma2_lua`, `ma2_help`, `ma2_guide`,
   `ma2_patch`, `ma2_backup`. See `docs/11-mcp-server.md`.
