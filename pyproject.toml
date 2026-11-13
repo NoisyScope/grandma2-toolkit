@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ma2kit"
-version = "0.4.0"
-description = "Toolkit for grandMA2 onPC: a Telnet CLI plus Lua plugins for effects, patching and pan/tilt normalization"
+version = "0.5.0"
+description = "Toolkit for grandMA2 onPC: an MCP server, a Telnet CLI and Lua plugins"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -16,6 +16,7 @@ dev = ["pytest>=8"]
 
 [project.scripts]
 ma2kit = "ma2kit.cli:main"
+ma2kit-mcp = "ma2kit.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["ma2kit*"]

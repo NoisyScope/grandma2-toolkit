@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
+
+- **MCP server** `ma2kit-mcp` (`ma2kit/mcp_server.py`, standard library only, stdio): tools `ma2_status`,
+  `ma2_command`, `ma2_list`, `ma2_set`, `ma2_export`, `ma2_import`, `ma2_lua`, `ma2_help`, `ma2_guide`,
+  `ma2_patch`, `ma2_backup`. See `docs/11-mcp-server.md`.
+- Safety in the server: show allow-list, `allow_destructive`, `confirm_live` when DMX hardware is
+  connected, dialogs cancelled by default, always back to the tree root.
+- Checked on 3.9.61 and written into the cheat sheet and the server's guide: fixture type import, layers,
+  fixtures, patching, `Move3D` / `Rotate3D`, presets, cues, executors, macros, layouts, views, timecode
+  shows, import from any folder with `/path=`.
+- Correction: `Assign <Object> N /property=value` at the root fails over Telnet (`Error #14`); it works
+  from inside the object tree. The cheat sheet had marked the root form as verified.
 
 - Screenshots of the menu and `doctor` in `docs/images/`, shown in the README and doc 08.
 - `tools/screenshots.py` remakes them from the real menu with scripted input, with the show name,

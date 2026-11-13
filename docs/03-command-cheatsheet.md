@@ -19,7 +19,7 @@ not sent here.
 | All in a pool | `List Preset 4.*` | ✔ `List Preset 4` alone finds nothing |
 | By name | `Group "Front"`, `Preset "Color"."Red 2"`, `Preset 4."Red*"`, `Group "ALL*"` | ✔ quotes for names, `*` as wildcard. The name must match fully (`"Red"` does not find `Red 2`) |
 | Options | `/nc` (no confirm), `/o` (overwrite), `/merge`, `/style=csv` | ✔ `/nc` skips the confirmation dialog |
-| Properties | `Assign Group 5 /Name="x"`, `Assign 1 /PosX=-5` | ✔ property = `List` column name without spaces |
+| Properties | `cd "Groups"; cd 1; Assign 5 /Name="x"; cd /`, `Assign 1 /PosX=-5` | ✔ property = `List` column name without spaces. ✔ Over Telnet this only works **from inside the tree**, at the object's parent: `Assign Group 5 /Name="x"` at the root answers `Error #14` (same for Sequence, Macro line, Timecode, Executor, Fixture) |
 | Several commands | `ClearAll; Group 5` | ✔ `;` separates commands on one line (also in `gma.cmd`) |
 | Tree paths | `Assign Root ."Settings"."Global" /Telnet="Login Disabled"` | ○ dotted path from the root of the tree |
 | Variables | `SetVar $x = 5`, `AddVar $x = +0.5`, `SetUserVar $y = "a"`, `$SHOWFILE` | ✔ `SetVar`, `$NAME` in commands; ○ `AddVar` |
@@ -79,8 +79,19 @@ FOUND FOR LIST` when the pool exists and is empty (✔ both).
 | `Label Group 500 "Front"` | ✔ `WARNING, NO OBJECTS FOUND FOR LABEL` if the group does not exist |
 | `Delete Plugin 101 /nc`, `Delete Group 500` | ✔ `/nc` deletes without a dialog; ○ without it the console may ask |
 | `Copy Group 1 At 600`, `Move Group 1 At 600` | ○ |
-| `Assign Macro 500.1 /cmd="ClearAll"` | ○ Set a macro line's command |
-| `Assign Effect 1.1 /lowvalue=5 /speed=80` | ○ Effect line properties (`Effect 1.1` = effect 1, line 1) |
+| `Store Macro 900`, `Store Macro 1.900.1` | ✔ New macro, new macro line |
+| `cd "Macros"; cd 1; cd 900; Assign 1 /CMD="ClearAll" /Wait=0.5; cd /` | ✔ Set a macro line's command and wait. `Assign Macro 1.900.1 /cmd="…"` at the root: `Error #14` over Telnet |
+| `Assign Effect 1.1 /lowvalue=5 /speed=80` | ○ Effect line properties (`Effect 1.1` = effect 1, line 1); expect to need the in-tree form |
+| `Store Preset 4.900`, `Label Preset 4.900 "Red"` | ✔ Preset from the programmer values (`Attribute "COLORRGB1" At 100` sets one attribute) |
+| `Store Cue 1 Sequence 900`, `Label Cue 1 Sequence 900 "x"` | ✔ Creates the sequence if needed |
+| `cd "ExecutorPages"; cd 1; cd 1; Assign Sequence 900 At 15; cd /` | ✔ Sequence on executor 15 of page 1. ✔ `Assign 15 /AutoStart="off"` there sets options. `Assign Sequence 900 At Executor 1.15` at the root: `Error #14` |
+| `Store Layout 900`, `Assign Group 1 Layout 900 /x=2 /y=3` | ✔ Layout from the selection; group or macro button at a grid position |
+| `Store View 900 /screen=1` | ✔ Saves what screen 1 shows now |
+| `Store Timecode 900`; `cd "Timecodes"; Assign 900 /Name="x" /Length=60` | ✔ New timecode show and its properties |
+| `Fixture 902; Move3D At 2.5 -5 3.3`, `Rotate3D At 0 0 90`, `Move3D At 1 0 0 /relative` | ✔ Place the selection in the 3D stage. `ClearSelection` between fixtures |
+| `Assign Dmx 5.003 At Fixture 903` | ✔ Patch one fixture from the root |
+| `cd "EditSetup"; cd "FixtureTypes"; Import "generic@dimmer@00"` | ✔ Fixture type from the library |
+| `Import "name" At Macro 901 /path="C:/some/folder"` | ✔ Import from any folder |
 | `Edit Effect 1`, `Menu Effect` | ○ Open editors on screen |
 
 ## Playback

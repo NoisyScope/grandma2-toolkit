@@ -1,8 +1,14 @@
 # grandma2-toolkit
 
-Tools for **grandMA2 onPC v3.9.61**: a Python CLI (`ma2kit`) that drives the console over its Telnet
-command line, and a manager for Lua plugins that run inside it. Everything reads the loaded show at
-runtime, so it works with any fixtures and layout.
+Tools for **grandMA2 onPC v3.9.61**:
+
+- an **MCP server** (`ma2kit-mcp`) that lets an AI agent read and set up a show: patch and position
+  fixtures, build presets, sequences, executors, macros and layouts, with status probes, verified recipes
+  and MA's official help built in. See [docs/11](docs/11-mcp-server.md);
+- a Python CLI (`ma2kit`) that drives the console over its Telnet command line;
+- a manager for Lua plugins that run inside it.
+
+Everything reads the loaded show at runtime, so it works with any fixtures and layout.
 
 > **Safety:** with an MA Command Wing or node connected, commands act on real fixtures. Set
 > `[safety] allowed_shows` to a test show while experimenting, and run `ma2kit backup` first.
@@ -15,6 +21,7 @@ More screenshots: [docs/08](docs/08-cli-and-safety.md#screenshots).
 
 | Part | State |
 |---|---|
+| **MCP server** for AI agents: 11 tools (status, command, list, set, export, import, Lua, help, guide, patch, backup) | working; what it can and cannot set up is listed in [docs/11](docs/11-mcp-server.md#what-an-agent-can-set-up) |
 | Connection: Telnet client with dialog handling and auto-reconnect, `doctor`, `cmd`, `shell`, `monitor` | working |
 | Interface: interactive terminal menu (Python) with screenshots in [docs/08](docs/08-cli-and-safety.md#screenshots) | working |
 | Show reader (`show ...`), auto groups (`groups auto`), `backup` | working |
@@ -49,6 +56,7 @@ plan asks for, and what is still missing, is in
 
 | Command | What it does |
 |---|---|
+| `ma2kit-mcp` (or `python -m ma2kit.mcp_server`) | MCP server over stdio for AI agents. |
 | `ma2kit` / `ma2kit menu` | Interactive numbered menu for everything below. |
 | `ma2kit doctor` | Checks config, connection, Telnet, login, version, user rights, loaded show, plugin folder. |
 | `ma2kit cmd "List Group"` | Sends one command line and prints the reply. |
@@ -82,7 +90,8 @@ Using the toolkit:
 - [07 Lua plugins](docs/07-plugins.md): writing plugins, the helper library, how install/update work
 - [08 Menu, backup, monitor and safety](docs/08-cli-and-safety.md)
 - [09 Macros, batch files and show checks](docs/09-macros-batch-checks.md)
-- [10 Fixture alignment to the 3D](docs/10-fixture-alignment.md) (design, next to be built)
+- [10 Fixture alignment to the 3D](docs/10-fixture-alignment.md) (design, not built)
+- [11 MCP server](docs/11-mcp-server.md): setup, tools, what an agent can set up, safety
 - [CHANGELOG](CHANGELOG.md)
 
 ## Development

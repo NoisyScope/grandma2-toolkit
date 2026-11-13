@@ -12,7 +12,7 @@ The repository root is this folder: `C:\Users\Admin\Documents\grandma2-toolkit`.
 
 | Topic | Decision |
 |---|---|
-| Tool form | **Python CLI** (terminal menus) that drives onPC from outside, **plus Lua plugins** that run inside onPC. |
+| Tool form | **Python CLI** (terminal menus) that drives onPC from outside, **plus Lua plugins** that run inside onPC. **Changed 2026-11-12: the owner now wants an MCP server as the main interface, so an AI agent can talk to the console completely (everything Telnet allows). The CLI stays as a secondary tool. See `docs/11-mcp-server.md`.** |
 | "Aligning" heads | Means **pan/tilt normalization**: make every moving head respond the same way (invert, swap, offset in the patch). Venue position presets, fans and XYZ calibration are *out of scope* for now. **Changed 2026-11-12: the owner's top priority is now fixture alignment, so the real rig mirrors the 3D exactly (beams first). Design: `docs/10-fixture-alignment.md`.** |
 | DMX output | onPC is used with **MA hardware (wing/node)**, so commands can move and light **real fixtures**. Treat every command as live. *Update 2026-11-12: the wing is currently disconnected and work targets the software and Stage view only (see section 6, 0.4.0). The rule applies again as soon as hardware is reconnected.* |
 | Repo location | This folder. Not yet a Git repository; you initialise it (Phase 0). |
@@ -209,6 +209,22 @@ README and `docs/08`), made by `tools/screenshots.py` from the real menu with pr
 Do the phases in order. Each ends with a commit and a short status report to the owner. Stop and ask when
 an acceptance check needs the owner (anything involving the running console).
 
+**0.5.0 (owner's new direction: MCP server first).** `ma2kit/mcp_server.py` + `ma2kit/mcp_guide.py`:
+11 tools over stdio with no dependencies, tested end to end on the test show (80 offline tests). The official
+help is installed locally at `MA_ROOT\lang\en\help\` (829 HTML pages, `key_keyword_<name>.html` per keyword):
+read it before guessing syntax (`ma2_help`). Facts found while building it:
+- `Assign <Object> N /prop=value` at the root fails over Telnet (`Error #14`); it works after `cd` to the
+  parent (`Groups/1`, `Sequences/1/<seq>`, `Macros/1/<macro>`, `Timecodes`, `ExecutorPages/1/<page>`,
+  `EditSetup/Layers/<layer>/<fixture>`). The keyword `Executor p.n` at the root also fails.
+- Verified: fixture type import from the library, new layer and fixtures, `/FixId`, `/Patch`, `Assign Dmx u.a
+  At Fixture N`, `Move3D` / `Rotate3D`, presets (dimmer, color, position), cues, sequence on an executor
+  and executor options, macros and macro lines, layouts with group/macro buttons, `Store View`, timecode show
+  properties, `Import … /path="folder"`, Lua through `dofile`.
+- Not solved: executor button/fader functions by command, single timecode events, building views' window
+  content, importing edited layout/timecode/executor XML. Next steps for the server are these gaps.
+- `Store <n>` on an executor page creates an executor **and** a new empty sequence; a new `Fixture N`
+  without a value in between adds to the selection (clear it between `Move3D` calls).
+
 ### Status against this brief (2026-11-12)
 
 ✔ done · ◐ partly done or done differently · ✘ missing. Keep this table current.
@@ -231,6 +247,7 @@ an acceptance check needs the owner (anything involving the running console).
 | **Phase 5.2** Auto groups | ◐ | Done: per fixture type, ALL / ODD / EVEN / halves, plus OUT>IN and IN>OUT, and a rig-wide ALL. ✘ Missing: per layer, thirds, left/right/center, every-Nth, configurable name pattern (names are fixed `<type> <variant>`) |
 | **Phase 5.3** Effect helpers | ✘ | Not started. `docs/01` lists the effect-line properties found so far |
 | **Phase 5.4** Patch helper | ✘ | Not started. Groundwork: `show check` already validates overlaps, overflow, unpatched and duplicate names on the loaded patch; the layer-export and subfixture-write methods are known (`docs/03`) |
+| **MCP server** (owner's main interface since 2026-11-12) | ◐ | Working: status probes, any command, list, set, export, import, Lua, official help search, recipes, one-step patching, backup. Gaps: executor button/fader functions, timecode events, view contents, verified XML round trips for layouts/timecode/executors, effects creation. See `docs/11-mcp-server.md` |
 | **Phase 5.7** Fixture alignment to the 3D (`ma2kit align`), **top priority** | ✘ | Designed in `docs/10-fixture-alignment.md`: focus all beams on a measured spot one by one into an "actual" preset, compare with the pan/tilt the 3D model gives for that spot, write `PanOffset`/`TiltOffset`, verify on a second spot. Found: grandMA2 3.9 has a built-in 4-point auto-calibration that does the opposite (moves the 3D to fit the rig) and XYZ programming. Software-only parts can be built now; offset sign/unit and the real alignment need hardware |
 | **Phase 5.5** Pan/tilt wizard | ✘ | Not started. Groundwork: read/write method for invert/offset verified. Blocked: the reference orientation (section 8) is unanswered, and with no wing the result can only be checked in the patch data, not seen (the Stage view ignores offset/invert). "Tried on two real heads" needs hardware |
 | **Phase 5.6** Housekeeping | ✔ | `backup`, `doctor` (version, login, rights, show vs `allowed_shows`, leftover temp files) |
