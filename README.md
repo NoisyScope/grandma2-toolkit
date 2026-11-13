@@ -82,6 +82,7 @@ Using the toolkit:
 - [07 Lua plugins](docs/07-plugins.md): writing plugins, the helper library, how install/update work
 - [08 Menu, backup, monitor and safety](docs/08-cli-and-safety.md)
 - [09 Macros, batch files and show checks](docs/09-macros-batch-checks.md)
+- [10 Fixture alignment to the 3D](docs/10-fixture-alignment.md) (design, next to be built)
 - [CHANGELOG](CHANGELOG.md)
 
 ## Development

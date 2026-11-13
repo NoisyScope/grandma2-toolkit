@@ -13,7 +13,7 @@ The repository root is this folder: `C:\Users\Admin\Documents\grandma2-toolkit`.
 | Topic | Decision |
 |---|---|
 | Tool form | **Python CLI** (terminal menus) that drives onPC from outside, **plus Lua plugins** that run inside onPC. |
-| "Aligning" heads | Means **pan/tilt normalization**: make every moving head respond the same way (invert, swap, offset in the patch). Venue position presets, fans and XYZ calibration are *out of scope* for now. |
+| "Aligning" heads | Means **pan/tilt normalization**: make every moving head respond the same way (invert, swap, offset in the patch). Venue position presets, fans and XYZ calibration are *out of scope* for now. **Changed 2026-11-12: the owner's top priority is now fixture alignment, so the real rig mirrors the 3D exactly (beams first). Design: `docs/10-fixture-alignment.md`.** |
 | DMX output | onPC is used with **MA hardware (wing/node)**, so commands can move and light **real fixtures**. Treat every command as live. *Update 2026-11-12: the wing is currently disconnected and work targets the software and Stage view only (see section 6, 0.4.0). The rule applies again as soon as hardware is reconnected.* |
 | Repo location | This folder. Not yet a Git repository; you initialise it (Phase 0). |
 | Language | English only (code, CLI, docs). |
@@ -231,6 +231,7 @@ an acceptance check needs the owner (anything involving the running console).
 | **Phase 5.2** Auto groups | ◐ | Done: per fixture type, ALL / ODD / EVEN / halves, plus OUT>IN and IN>OUT, and a rig-wide ALL. ✘ Missing: per layer, thirds, left/right/center, every-Nth, configurable name pattern (names are fixed `<type> <variant>`) |
 | **Phase 5.3** Effect helpers | ✘ | Not started. `docs/01` lists the effect-line properties found so far |
 | **Phase 5.4** Patch helper | ✘ | Not started. Groundwork: `show check` already validates overlaps, overflow, unpatched and duplicate names on the loaded patch; the layer-export and subfixture-write methods are known (`docs/03`) |
+| **Phase 5.7** Fixture alignment to the 3D (`ma2kit align`), **top priority** | ✘ | Designed in `docs/10-fixture-alignment.md`: focus all beams on a measured spot one by one into an "actual" preset, compare with the pan/tilt the 3D model gives for that spot, write `PanOffset`/`TiltOffset`, verify on a second spot. Found: grandMA2 3.9 has a built-in 4-point auto-calibration that does the opposite (moves the 3D to fit the rig) and XYZ programming. Software-only parts can be built now; offset sign/unit and the real alignment need hardware |
 | **Phase 5.5** Pan/tilt wizard | ✘ | Not started. Groundwork: read/write method for invert/offset verified. Blocked: the reference orientation (section 8) is unanswered, and with no wing the result can only be checked in the patch data, not seen (the Stage view ignores offset/invert). "Tried on two real heads" needs hardware |
 | **Phase 5.6** Housekeeping | ✔ | `backup`, `doctor` (version, login, rights, show vs `allowed_shows`, leftover temp files) |
 | **Phase 6** Menu | ✔ | Every menu entry is also a subcommand; screenshots in `docs/08` |

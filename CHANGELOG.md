@@ -7,6 +7,8 @@
   computer name and user folder replaced.
 - `AGENT_BRIEF.md`: a status table marks every goal, phase and safety rule as done, partly done or
   missing; section 3 items now say which were checked on 3.9.61. The README links to it.
+- `docs/10-fixture-alignment.md`: design for aligning the real rig to the 3D with pan/tilt offsets, and
+  what grandMA2 3.9 already has (4-point auto-calibration, XYZ).
 
 ## 0.4.0
 
