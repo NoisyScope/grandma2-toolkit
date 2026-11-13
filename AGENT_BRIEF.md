@@ -244,7 +244,7 @@ an acceptance check needs the owner (anything involving the running console).
 | 6 Console settings | ✔ | Never changed by the tool; the owner made them |
 | 7 Secrets | ✔ | `config.toml` git-ignored, password masked in transcripts |
 | 8 Track files in `MA_ROOT` | ◐ | No manifest file: everything ma2kit writes is in its own `ma2kit/` subfolders or named `ma2kit_tmp…`, and `doctor` removes leftovers |
-| **Section 8 question** (reference orientation) | ✘ | Not asked or answered yet. Needed before the pan/tilt wizard |
+| **Section 8 question** (reference orientation) | ✘ | Asked 2026-11-12; the owner chose to **decide later**. Work on the other utilities first and ask again before starting the pan/tilt wizard |
 
 ### Phase 0: Repository bootstrap
 - `git init`, default branch `main`. Add `.gitignore` (Python, `config.toml`, `*.show.gz`, `*.backup`, exports, logs).
